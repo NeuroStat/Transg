@@ -11,6 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 # Introduction
 
 # Actual data
+```{r ReadData, include = FALSE}
+
+```
 ## Descriptives
 ### About the population
 ### Variables of interest
@@ -25,6 +28,98 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Intro
 
 ## Code
+```{r Simulate power}
+###############################################################################
+#                                                                             #
+#           Power in function of participants or repeated measures            #
+#                                                                             #
+###############################################################################
+
+#######################################
+#     Setup                           #
+#######################################
+
+  # Working directory
+  
+  # Libraries
+    library(lme4)
+
+#######################################
+#     Parameters                      #
+#######################################
+  # Number of simulations
+  nsim <- 1000
+
+  # number of participants in case of 1 measure per participants
+  n.1 <- 30
+  
+  # number of participants in case of 2 measures per participants
+  n.2 <- 15
+
+  # Variance on population level
+  var <- 1
+  
+  # Effect in group 1, equal to 0
+  mean <- 0
+  
+  # Difference between groups
+  delta <- 0.5
+
+  # Obtain an average correlation of 0.82 between 2 measures of the same participant
+  err <- 0.7
+
+  # Function of X1
+  alph <- 1.5
+  
+  # Significance level
+  sig <- 0.05
+  tcut <- qt(p = sig, df = (n.2*4)-2)
+  
+#######################################
+#     Code                            #
+#######################################
+  power.1 <- array(data=NA, dim = nsim)
+  power.2 <- array(data=NA, dim = nsim)
+  cor.2 <- array(data=NA, dim = nsim)
+  
+  for(i in 1:nsim){
+    # Simulate data
+      # 1 measure per participant
+      X1.1 <- rnorm(n = n.1, mean = mean, sd = sqrt(var))
+      X2.1 <- rnorm(n = n.1, mean = delta, sd = sqrt(var))
+      X.1 <- c(X1.1, X2.1)
+      Y.1 <- c(rep(0, n.1), rep(1, n.1))
+      
+      # 2 measures per participant
+      X1.2f <- rnorm(n = n.2, mean = mean, sd = sqrt(var))
+      X1.2s <- X1.2f + rnorm(n = n.2, mean = 0, sd = err)
+      X2.2f <- rnorm(n = n.2, mean = delta, sd = sqrt(var))
+      X2.2s <- X2.2f + rnorm(n = n.2, mean = 0, sd = err)
+      X.2 <- c(X1.2f, X1.2s, X2.2f, X2.2s)
+      Y.2 <- c(rep(0, n.2*2), rep(1, n.2*2))
+      subject <- rep(1:n.2,4)
+      cor.2[i] <- cor(X1.2f,X1.2s)
+      
+    # Compute power
+      # 1 measure per participant: GLM with group as predictor
+      GLM.1 <- glm(X.1 ~ Y.1)
+      # 1 measure per participant: compute power
+      power.1[i] <- as.numeric(unlist(summary(GLM.1)[12])[8])
+      
+      # 2 measures per participant: mixed model with random intercept and group as predictor
+      MM.2 <- lmer(X.2 ~ Y.2 + (1 | subject))
+      power.2[i] <- as.numeric(unlist(summary(MM.2)[10])[6])
+  }
+  
+# check power
+  power.t.test(n = n.1*2, d = delta, sig.level = sig, type="two.sample",alternative="two.sided")[[5]]
+  p.1 <- as.numeric(unlist(table(power.1 < sig))[2])/nsim
+  p.2 <- as.numeric(unlist(table(power.2 > tcut))[2])/nsim
+  p.1
+  p.2
+  mean(cor.2)
+```
+
 
 ## Results
 

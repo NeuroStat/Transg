@@ -155,6 +155,100 @@ $(document).ready(function () {
 </div>
 <div id="code" class="section level2">
 <h2>Code</h2>
+<pre class="r"><code>###############################################################################
+#                                                                             #
+#           Power in function of participants or repeated measures            #
+#                                                                             #
+###############################################################################
+
+#######################################
+#     Setup                           #
+#######################################
+
+  # Working directory
+  
+  # Libraries
+    library(lme4)</code></pre>
+<pre><code>## Warning: package 'lme4' was built under R version 3.3.2</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre class="r"><code>#######################################
+#     Parameters                      #
+#######################################
+  # Number of simulations
+  nsim &lt;- 1000
+
+  # number of participants in case of 1 measure per participants
+  n.1 &lt;- 30
+  
+  # number of participants in case of 2 measures per participants
+  n.2 &lt;- 15
+
+  # Variance on population level
+  var &lt;- 1
+  
+  # Effect in group 1, equal to 0
+  mean &lt;- 0
+  
+  # Difference between groups
+  delta &lt;- 0.5
+
+  # Obtain an average correlation of 0.82 between 2 measures of the same participant
+  err &lt;- 0.7
+
+  # Function of X1
+  alph &lt;- 1.5
+  
+  # Significance level
+  sig &lt;- 0.05
+  tcut &lt;- qt(p = sig, df = (n.2*4)-2)
+  
+#######################################
+#     Code                            #
+#######################################
+  power.1 &lt;- array(data=NA, dim = nsim)
+  power.2 &lt;- array(data=NA, dim = nsim)
+  cor.2 &lt;- array(data=NA, dim = nsim)
+  
+  for(i in 1:nsim){
+    # Simulate data
+      # 1 measure per participant
+      X1.1 &lt;- rnorm(n = n.1, mean = mean, sd = sqrt(var))
+      X2.1 &lt;- rnorm(n = n.1, mean = delta, sd = sqrt(var))
+      X.1 &lt;- c(X1.1, X2.1)
+      Y.1 &lt;- c(rep(0, n.1), rep(1, n.1))
+      
+      # 2 measures per participant
+      X1.2f &lt;- rnorm(n = n.2, mean = mean, sd = sqrt(var))
+      X1.2s &lt;- X1.2f + rnorm(n = n.2, mean = 0, sd = err)
+      X2.2f &lt;- rnorm(n = n.2, mean = delta, sd = sqrt(var))
+      X2.2s &lt;- X2.2f + rnorm(n = n.2, mean = 0, sd = err)
+      X.2 &lt;- c(X1.2f, X1.2s, X2.2f, X2.2s)
+      Y.2 &lt;- c(rep(0, n.2*2), rep(1, n.2*2))
+      subject &lt;- rep(1:n.2,4)
+      cor.2[i] &lt;- cor(X1.2f,X1.2s)
+      
+    # Compute power
+      # 1 measure per participant: GLM with group as predictor
+      GLM.1 &lt;- glm(X.1 ~ Y.1)
+      # 1 measure per participant: compute power
+      power.1[i] &lt;- as.numeric(unlist(summary(GLM.1)[12])[8])
+      
+      # 2 measures per participant: mixed model with random intercept and group as predictor
+      MM.2 &lt;- lmer(X.2 ~ Y.2 + (1 | subject))
+      power.2[i] &lt;- as.numeric(unlist(summary(MM.2)[10])[6])
+  }
+  
+# check power
+  power.t.test(n = n.1*2, d = delta, sig.level = sig, type=&quot;two.sample&quot;,alternative=&quot;two.sided&quot;)[[5]]</code></pre>
+<pre><code>## [1] 0.7752644</code></pre>
+<pre class="r"><code>  p.1 &lt;- as.numeric(unlist(table(power.1 &lt; sig))[2])/nsim
+  p.2 &lt;- as.numeric(unlist(table(power.2 &gt; tcut))[2])/nsim
+  p.1</code></pre>
+<pre><code>## [1] 0.488</code></pre>
+<pre class="r"><code>  p.2</code></pre>
+<pre><code>## [1] 0.989</code></pre>
+<pre class="r"><code>  mean(cor.2)</code></pre>
+<pre><code>## [1] 0.8091066</code></pre>
 </div>
 <div id="results" class="section level2">
 <h2>Results</h2>
