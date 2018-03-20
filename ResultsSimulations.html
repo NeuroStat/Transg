@@ -165,7 +165,7 @@ dim(data.hyp)</code></pre>
 <div id="code" class="section level2">
 <h2>Code</h2>
 <p>First we need to define the parameters of our simulations.</p>
-<pre class="r"><code>  seps&lt;-1  
+<pre class="r"><code>  seps &lt;- 1  
 
   # Number of simulations
   asim &lt;- 10
@@ -201,8 +201,8 @@ dim(data.hyp)</code></pre>
     pow.4&lt;-vector(&quot;numeric&quot;,asim)
     
     for(k in 1:asim){
-        # Scenario 1: two groups with equal amount of subjects, 
-        # groups differ with an effect size delta
+        # Scenario 1: lower bound of power curve
+        # two groups with equal amount of subjects, groups differ with an effect size delta
           # Construct a vector that determines in which group each subject falls
           x&lt;-c(rep(1,n.1),rep(0,n.2))
           
@@ -214,8 +214,8 @@ dim(data.hyp)</code></pre>
           # Boolean of whether an effect is detected, this is later used to compute the power
           pow.1[k]&lt;-summary(lm(y~x))$coef[2,4]&lt;alpha
         
-        # Scenario 2: two groups with equal amount of subjects,
-        # 
+        # Scenario 2: upper bound of power curve
+        # two groups with equal amount of subjects, twice as many as scenario 1, groups differ with an effect size delta
           # Construct a vector that determines in which group each subject falls
           x2&lt;-c(rep(1,(n.1*2)),rep(0,(n.2*2)))
           
@@ -227,8 +227,8 @@ dim(data.hyp)</code></pre>
           # Boolean of whether an effect is detected, this is later used to compute the power
           pow.2[k]&lt;-summary(lm(y2~x2))$coef[2,4]&lt;alpha
 
-        # Scenario 3: two groups with equal amount of subjects,
-        # 
+        # Scenario 3: two measurements for every subject, same amount of subjects as in scenario 1
+        # two groups with equal amount of subjects, correlation between measurements, groups differ with an effect size delta
           # Construct a vector that determines in which group each subject falls
           x3&lt;-c(rep(1,n.1),rep(0,n.2),rep(1,n.1),rep(0,n.2))
           
@@ -252,7 +252,7 @@ dim(data.hyp)</code></pre>
           # Boolean of whether an effect is detected, this is later used to compute the power
           pow.3[k]&lt;-summary(mm)$coef[2,5]&lt;alpha
         
-          # What if we work with the average?
+        # Scenario 4: What if we work with the average?
           y3m&lt;-(y3+y3.2)/2
           # Boolean of whether an effect is detected, this is later used to compute the power
           pow.4[k]&lt;-summary(lm(y3m~x))$coef[2,4]&lt;alpha
