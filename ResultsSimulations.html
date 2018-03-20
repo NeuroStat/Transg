@@ -129,6 +129,15 @@ $(document).ready(function () {
 </div>
 <div id="actual-data" class="section level1">
 <h1>Actual data</h1>
+<pre class="r"><code># Read in data
+data.hyp &lt;- read.csv(&quot;../1.Data/Behzad_hyp.csv&quot;, sep=&quot;\t&quot;)
+data.all &lt;- read.csv(&quot;../1.Data/Behzad_all.csv&quot;, sep=&quot;;&quot;)
+
+# Check data
+dim(data.hyp)</code></pre>
+<pre><code>## [1] 140 102</code></pre>
+<pre class="r"><code>dim(data.all)</code></pre>
+<pre><code>## [1] 141 820</code></pre>
 <div id="descriptives" class="section level2">
 <h2>Descriptives</h2>
 <div id="about-the-population" class="section level3">
@@ -156,80 +165,106 @@ $(document).ready(function () {
 <div id="code" class="section level2">
 <h2>Code</h2>
 <p>First we need to define the parameters of our simulations.</p>
+<pre class="r"><code>  seps&lt;-1  
+
+  # Number of simulations
+  asim &lt;- 10
+
+  # Effect size
+  delta &lt;- 0.8
+  
+  # Number of participants
+  n &lt;- 30
+  n.1 &lt;- n/2      # in the first group
+  n.2 &lt;- n/2      # in the second group
+
+  # Level of statistical significance 
+  alpha &lt;- 0.05
+
+  # Correlation between first and second measurement
+  rho &lt;- seq(0.01,0.99,0.01)</code></pre>
+<p>Then we prepare objects to store our results</p>
 <pre class="r"><code>  # Number of simulations
-  nsim &lt;- 10
-
-  # number of participants in case of 1 measure per participants
-  n.1 &lt;- c(20,30,50)
-  
-  # number of participants in case of 2 measures per participants
-  n.2 &lt;- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
-
-  # Variance on population level
-  var &lt;- 1
-  
-  # Effect in group 1, equal to 0
-  mean &lt;- 0
-  
-  # Difference between groups
-  # This is similar to the difference between groups in our dataset
-  delta &lt;- c(0.25, 0.5, 1)
-
-  # Obtain an average correlation of 0.82 between 2 measures of the same participant
-  alph &lt;- c(0.6, 0.7, 0.8, 0.9)
-  
-  # Significance level
-  sig &lt;- 0.05</code></pre>
+  pow.mean1&lt;-vector(&quot;numeric&quot;,length(rho))
+  pow.mean2&lt;-vector(&quot;numeric&quot;,length(rho))
+  pow.mean3&lt;-vector(&quot;numeric&quot;,length(rho))
+  pow.mean4&lt;-vector(&quot;numeric&quot;,length(rho))</code></pre>
 <pre class="r"><code>  # Libraries
-  library(lme4)</code></pre>
-<pre><code>## Warning: package 'lme4' was built under R version 3.3.2</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
-<pre class="r"><code>  # Construct arrays to save data
-  power.1 &lt;- array(data=NA, dim = c(nsim, length(n.1), length(n.2), length(delta), length(alph)))
-  power.2 &lt;- array(data=NA, dim = c(nsim, length(n.1), length(n.2), length(delta), length(alph)))
-  p.1 &lt;- array(data=NA, dim = c(length(n.1), length(n.2), length(delta), length(alph)))
-  p.2 &lt;- array(data=NA, dim = c(length(n.1), length(n.2), length(delta), length(alph)))
-  
-  for(n1 in 1:length(n.1)){
-    for(n2 in 1:length(n.2)){
-      for(d in 1:length(delta)){
-        for(a in 1:length(alph)){
-          for(i in 1:nsim){
-            # Simulate data
-              # 1 measure per participant
-              X1.1 &lt;- rnorm(n = n.1[n1], mean = mean, sd = sqrt(var))
-              X2.1 &lt;- rnorm(n = n.1[n1], mean = delta[d], sd = sqrt(var))
-              X.1 &lt;- c(X1.1, X2.1)
-              Y.1 &lt;- c(rep(0, n.1[n1]), rep(1, n.1[n1]))
-              
-              # 2 measures per participant
-              X1.2f &lt;- rnorm(n = n.2[n2], mean = mean, sd = sqrt(var))
-              X1.2s &lt;- alph[a]*X1.2f + rnorm(n = n.2[n2], mean = 0, sd = sqrt(var))
-              X2.2f &lt;- rnorm(n = n.2[n2], mean = delta[d], sd = sqrt(var))
-              X2.2s &lt;- alph[a]*X2.2f + rnorm(n = n.2[n2], mean = 0, sd = sqrt(var))
-              X.2 &lt;- c(X1.2f, X1.2s, X2.2f, X2.2s)
-              Y.2 &lt;- c(rep(0, n.2[n2]*2), rep(1, n.2[n2]*2))
-              subject &lt;- rep(1:n.2[n2],4)
-              
-            # Compute power
-              # 1 measure per participant: GLM with group as predictor
-              GLM.1 &lt;- glm(X.1 ~ Y.1)
-              # 1 measure per participant: compute power
-              power.1[i,n1,n2,d,a] &lt;- as.numeric(unlist(summary(GLM.1)[12])[8])
-              
-              # 2 measures per participant: mixed model with random intercept and group as predictor
-              MM.2 &lt;- lmer(X.2 ~ Y.2 + (1 | subject))
-              power.2[i,n1,n2,d,a] &lt;- as.numeric(unlist(summary(MM.2)[10])[6])
-          }
-            tcut &lt;- qt(p = sig, df = (n.2[n2]*4)-2)
-            p.1[n1,n2,d,a] &lt;- as.numeric(unlist(table(power.1[,n1,n2,d,a] &lt; sig))[2])/nsim
-            p.2[n1,n2,d,a] &lt;- as.numeric(unlist(table(power.2[,n1,n2,d,a] &gt; tcut))[2])/nsim
-    }}}}</code></pre>
+  library(lme4)
+  library(lmerTest)</code></pre>
+<pre class="r"><code>  # Loop over preset correlations between measure 1 and measure 2
+  for(i in 1:length(rho)){
+    # Create objects to store power in for every simulations
+    pow.1&lt;-vector(&quot;numeric&quot;,asim)
+    pow.2&lt;-vector(&quot;numeric&quot;,asim)
+    pow.3&lt;-vector(&quot;numeric&quot;,asim)
+    pow.4&lt;-vector(&quot;numeric&quot;,asim)
+    
+    for(k in 1:asim){
+        # Scenario 1: two groups with equal amount of subjects, 
+        # groups differ with an effect size delta
+          # Construct a vector that determines in which group each subject falls
+          x&lt;-c(rep(1,n.1),rep(0,n.2))
+          
+          # Vector with observations in the set of participants
+          y&lt;-rnorm(n,0,1)       
+          # Add an effect size to the first group
+          y[1:n.1]&lt;-y[1:n.1]+delta    
+        
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.1[k]&lt;-summary(lm(y~x))$coef[2,4]&lt;alpha
+        
+        # Scenario 2: two groups with equal amount of subjects,
+        # 
+          # Construct a vector that determines in which group each subject falls
+          x2&lt;-c(rep(1,(n.1*2)),rep(0,(n.2*2)))
+          
+          # Vector with observations in the set of participants
+          y2&lt;-rnorm(n*2,0,1)
+          # Add an effect size to the first group
+          y2[1:(n.1*2)]&lt;-y2[1:(n.1*2)]+delta
+        
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.2[k]&lt;-summary(lm(y2~x2))$coef[2,4]&lt;alpha
+
+        # Scenario 3: two groups with equal amount of subjects,
+        # 
+          # Construct a vector that determines in which group each subject falls
+          x3&lt;-c(rep(1,n.1),rep(0,n.2),rep(1,n.1),rep(0,n.2))
+          
+          # Vector with first observation of every participant
+          y3&lt;-rnorm(n,0,1)
+          # Factor to multiply second set of observations with to obtain results in line with predefined correlation
+          alpac&lt;-sqrt(rho[i]^2/(1-rho[i]^2)*seps)
+          # Construct second set of observations that are correlated with first set (y3)
+          y3.2u&lt;-alpac*y3+rnorm(n)
+          y3.2&lt;-y3.2u/sqrt(var(y3.2u))
+          # Add effect size to the first group of participants
+          y3[1:n.1]&lt;-y3[1:n.1]+delta
+          y3.2[1:n.1]&lt;-y3.2[1:n.1]+delta
+          # Combine both observations in 1 vector
+          y3o&lt;-c(y3,y3.2)
+        
+          # Define subject numbers
+          subject&lt;-rep(1:n,2)
+          # Construct mixed model
+          mm&lt;-lmer(y3o ~ x3 + (1 | subject))   
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.3[k]&lt;-summary(mm)$coef[2,5]&lt;alpha
+        
+          # What if we work with the average?
+          y3m&lt;-(y3+y3.2)/2
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.4[k]&lt;-summary(lm(y3m~x))$coef[2,4]&lt;alpha
+    }
+    pow.mean1[i]&lt;-mean(pow.1)
+    pow.mean2[i]&lt;-mean(pow.2)
+    pow.mean3[i]&lt;-mean(pow.3)
+    pow.mean4[i]&lt;-mean(pow.4)
+  }</code></pre>
 </div>
 <div id="results" class="section level2">
 <h2>Results</h2>
-<pre class="r"><code>p.1[1,1,1,1]</code></pre>
-<pre><code>## [1] 0.1</code></pre>
 </div>
 </div>
 <div id="discussion" class="section level1">

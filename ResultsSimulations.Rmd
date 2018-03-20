@@ -6,13 +6,20 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache=TRUE)
 ```
 
 # Introduction
 
 # Actual data
-```{r ReadData, include = FALSE}
+```{r ReadData}
+# Read in data
+data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep="\t")
+data.all <- read.csv("../1.Data/Behzad_all.csv", sep=";")
 
+# Check data
+dim(data.hyp)
+dim(data.all)
 ```
 ## Descriptives
 ### About the population
@@ -33,87 +40,122 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 First we need to define the parameters of our simulations. 
 ```{r Simulations parameters}
+  seps<-1  
+
   # Number of simulations
-  nsim <- 10
+  asim <- 10
 
-  # number of participants in case of 1 measure per participants
-  n.1 <- c(20,30,50)
+  # Effect size
+  delta <- 0.8
   
-  # number of participants in case of 2 measures per participants
-  n.2 <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+  # Number of participants
+  n <- 30
+  n.1 <- n/2      # in the first group
+  n.2 <- n/2      # in the second group
 
-  # Variance on population level
-  var <- 1
-  
-  # Effect in group 1, equal to 0
-  mean <- 0
-  
-  # Difference between groups
-  # This is similar to the difference between groups in our dataset
-  delta <- c(0.25, 0.5, 1)
+  # Level of statistical significance 
+  alpha <- 0.05
 
-  # Obtain an average correlation of 0.82 between 2 measures of the same participant
-  alph <- c(0.6, 0.7, 0.8, 0.9)
-  
-  # Significance level
-  sig <- 0.05
+  # Correlation between first and second measurement
+  rho <- seq(0.01,0.99,0.01)
+```
+
+Then we prepare objects to store our results
+```{r Create objects}
+  # Number of simulations
+  pow.mean1<-vector("numeric",length(rho))
+  pow.mean2<-vector("numeric",length(rho))
+  pow.mean3<-vector("numeric",length(rho))
+  pow.mean4<-vector("numeric",length(rho))
+```
+
+```{r Load libraries, warning=FALSE}
+  # Libraries
+  library(lme4)
+  library(lmerTest)
 ```
 
 ```{r Simulations code}
-  # Libraries
-  library(lme4)
+  # Loop over preset correlations between measure 1 and measure 2
+  for(i in 1:length(rho)){
+    # Create objects to store power in for every simulations
+    pow.1<-vector("numeric",asim)
+    pow.2<-vector("numeric",asim)
+    pow.3<-vector("numeric",asim)
+    pow.4<-vector("numeric",asim)
+    
+    for(k in 1:asim){
+        # Scenario 1: two groups with equal amount of subjects, 
+        # groups differ with an effect size delta
+          # Construct a vector that determines in which group each subject falls
+          x<-c(rep(1,n.1),rep(0,n.2))
+          
+          # Vector with observations in the set of participants
+          y<-rnorm(n,0,1)       
+          # Add an effect size to the first group
+          y[1:n.1]<-y[1:n.1]+delta    
+        
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.1[k]<-summary(lm(y~x))$coef[2,4]<alpha
+        
+        # Scenario 2: two groups with equal amount of subjects,
+        # 
+          # Construct a vector that determines in which group each subject falls
+          x2<-c(rep(1,(n.1*2)),rep(0,(n.2*2)))
+          
+          # Vector with observations in the set of participants
+          y2<-rnorm(n*2,0,1)
+          # Add an effect size to the first group
+          y2[1:(n.1*2)]<-y2[1:(n.1*2)]+delta
+        
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.2[k]<-summary(lm(y2~x2))$coef[2,4]<alpha
 
-  # Construct arrays to save data
-  power.1 <- array(data=NA, dim = c(nsim, length(n.1), length(n.2), length(delta), length(alph)))
-  power.2 <- array(data=NA, dim = c(nsim, length(n.1), length(n.2), length(delta), length(alph)))
-  p.1 <- array(data=NA, dim = c(length(n.1), length(n.2), length(delta), length(alph)))
-  p.2 <- array(data=NA, dim = c(length(n.1), length(n.2), length(delta), length(alph)))
-  
-  for(n1 in 1:length(n.1)){
-    for(n2 in 1:length(n.2)){
-      for(d in 1:length(delta)){
-        for(a in 1:length(alph)){
-          for(i in 1:nsim){
-            # Simulate data
-              # 1 measure per participant
-              X1.1 <- rnorm(n = n.1[n1], mean = mean, sd = sqrt(var))
-              X2.1 <- rnorm(n = n.1[n1], mean = delta[d], sd = sqrt(var))
-              X.1 <- c(X1.1, X2.1)
-              Y.1 <- c(rep(0, n.1[n1]), rep(1, n.1[n1]))
-              
-              # 2 measures per participant
-              X1.2f <- rnorm(n = n.2[n2], mean = mean, sd = sqrt(var))
-              X1.2s <- alph[a]*X1.2f + rnorm(n = n.2[n2], mean = 0, sd = sqrt(var))
-              X2.2f <- rnorm(n = n.2[n2], mean = delta[d], sd = sqrt(var))
-              X2.2s <- alph[a]*X2.2f + rnorm(n = n.2[n2], mean = 0, sd = sqrt(var))
-              X.2 <- c(X1.2f, X1.2s, X2.2f, X2.2s)
-              Y.2 <- c(rep(0, n.2[n2]*2), rep(1, n.2[n2]*2))
-              subject <- rep(1:n.2[n2],4)
-              
-            # Compute power
-              # 1 measure per participant: GLM with group as predictor
-              GLM.1 <- glm(X.1 ~ Y.1)
-              # 1 measure per participant: compute power
-              power.1[i,n1,n2,d,a] <- as.numeric(unlist(summary(GLM.1)[12])[8])
-              
-              # 2 measures per participant: mixed model with random intercept and group as predictor
-              MM.2 <- lmer(X.2 ~ Y.2 + (1 | subject))
-              power.2[i,n1,n2,d,a] <- as.numeric(unlist(summary(MM.2)[10])[6])
-          }
-            tcut <- qt(p = sig, df = (n.2[n2]*4)-2)
-            p.1[n1,n2,d,a] <- as.numeric(unlist(table(power.1[,n1,n2,d,a] < sig))[2])/nsim
-            p.2[n1,n2,d,a] <- as.numeric(unlist(table(power.2[,n1,n2,d,a] > tcut))[2])/nsim
-    }}}}
+        # Scenario 3: two groups with equal amount of subjects,
+        # 
+          # Construct a vector that determines in which group each subject falls
+          x3<-c(rep(1,n.1),rep(0,n.2),rep(1,n.1),rep(0,n.2))
+          
+          # Vector with first observation of every participant
+          y3<-rnorm(n,0,1)
+          # Factor to multiply second set of observations with to obtain results in line with predefined correlation
+          alpac<-sqrt(rho[i]^2/(1-rho[i]^2)*seps)
+          # Construct second set of observations that are correlated with first set (y3)
+          y3.2u<-alpac*y3+rnorm(n)
+          y3.2<-y3.2u/sqrt(var(y3.2u))
+          # Add effect size to the first group of participants
+          y3[1:n.1]<-y3[1:n.1]+delta
+          y3.2[1:n.1]<-y3.2[1:n.1]+delta
+          # Combine both observations in 1 vector
+          y3o<-c(y3,y3.2)
+        
+          # Define subject numbers
+          subject<-rep(1:n,2)
+          # Construct mixed model
+          mm<-lmer(y3o ~ x3 + (1 | subject))   
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.3[k]<-summary(mm)$coef[2,5]<alpha
+        
+          # What if we work with the average?
+          y3m<-(y3+y3.2)/2
+          # Boolean of whether an effect is detected, this is later used to compute the power
+          pow.4[k]<-summary(lm(y3m~x))$coef[2,4]<alpha
+    }
+    pow.mean1[i]<-mean(pow.1)
+    pow.mean2[i]<-mean(pow.2)
+    pow.mean3[i]<-mean(pow.3)
+    pow.mean4[i]<-mean(pow.4)
+  }
 ```
 
 
 ## Results
 ```{r Simulation results}
-p.1[1,1,1,1]
+
 ```
 
 # Discussion
 
 ```{r temp, echo=FALSE}
-temp <- 1
+
 ```
