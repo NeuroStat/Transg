@@ -34,6 +34,7 @@ names(data.hyp[,55:80])
 In this section population parameters are presented. 
 
 ###Gender
+There were 60 cisgender and 80 transgender participants. One participant (P22) was removed from the analysis because no anatomical data was available for this participant. 
 ```{r Gender}
 ng1 <- sum(data.all[,2]==1)
 ng2 <- sum(data.all[,2]==2)
@@ -45,7 +46,6 @@ paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, ", transgender men =
 hist(data.all[,2], xlab = "Gender", xaxt = "n", col = "seagreen3", border = "white", main = "Frequency of gender")
 axis(1,at=c(1:4),labels=c("CW", "CM", "TM", "TW"))
 ```
-There were 60 cisgender and 80 transgender participants. One participant (P22) was removed from the analysis because no anatomical data was available for this participant.
 
 ###Age
 ```{r Age}
@@ -69,72 +69,104 @@ summary(data.all[data.all[,2]>2,4])
 table(data.all[,5])
 ```
 
-Level of education
+###Level of education
 ```{r Education}
 table(data.all[,6])
 ```
 
-Handedness
+###Handedness
 ```{r Handedness}
 table(data.all[,7])
 ```
 
-Gender identity
+###Gender identity
 ```{r Gender identity}
 summary(data.all[,8])
 table(data.all[,8])
+
+# Cisgender women
+summary(data.all[data.all[,2]==1,8])
+
+# Cisgender men
+summary(data.all[data.all[,2]==2,8])
+
+# Transgender women
+summary(data.all[data.all[,2]==3,8])
+
+# Transgender men
+summary(data.all[data.all[,2]==4,8])
 ```
 
-Sexual orientation
+###Sexual orientation
 ```{r Sexual orientation}
 summary(data.all[,9])
 table(data.all[,9])
+
+# Cisgender women
+summary(data.all[data.all[,2]==1,9])
+
+# Cisgender men
+summary(data.all[data.all[,2]==2,9])
+
+# Transgender women
+summary(data.all[data.all[,2]==3,9])
+
+# Transgender men
+summary(data.all[data.all[,2]==4,9])
 ```
 
+
 ### Mental illnesses
-#### Transgender group
-Somatization
+There are no available measures for the cisgender group. 
+####Somatization
 ```{r Somatization}
 table(data.all[,22])
 ```
 
-Obsessive-compulsive disorder
+####Obsessive-compulsive disorder
 ```{r OCD}
 table(data.all[,23])
 ```
 Among the cisgender participants 1 had a history of obsession.
 
-Interpersonal sensitivity
+####Interpersonal sensitivity
 ```{r Interpersonal sensitivity}
 table(data.all[,24])
 ```
 
-Depression
+####Depression
 ```{r Depression}
 table(data.all[,25])
 ```
 Among the cisgender participants 3 had a history of depression.
 
+####Anxiety
 ```{r Anxiety}
 table(data.all[,26])
 ```
 Among the cisgender participants 1 had a history of a general anxiety disorder.
+
+####Hostility
 ```{r Hostility}
 table(data.all[,27])
 ```
 
+####Phobic anxiety
 ```{r Phobic Anxiety}
 table(data.all[,28])
 ```
 
+####Paranoia
 ```{r Paranoia}
 table(data.all[,29])
 ```
 
+####Psychotism
 ```{r Psychotism}
 table(data.all[,30])
 ```
 
+####Global severity
 ```{r Global severity}
 table(data.all[,31])
 ```
@@ -145,8 +177,6 @@ Out of 60 cisgender participants 3 had a history of depression, 1 reported a gen
 
 Past medical condition
 Out of 60 cisgender participants 3 reported migraine, 1 reported left ear surgery, 1 participant had suffered from heart palpitations, 1 participants reported a history of meningitis, 1 participant reported they had asthma as a child and 1 partcipants reported favism.
-
-### Variables of interest
 
 ## Analysis of 1 measurement
 ```{r onemeas}
@@ -166,6 +196,7 @@ for(i in bg:nd){
 pancorr <- p.adjust(pan, method = "bonferroni")
 round(pancorr,3)
 sum(pancorr < 0.05)
+names(data.hyp[,which(pancorr < 0.05) + bg - 1])
 ```
 
 ## Analysis of the average
@@ -186,9 +217,12 @@ for(i in bg:nd){
 pancorr <- p.adjust(pan, method = "bonferroni")
 round(pancorr,3)
 sum(pancorr < 0.05)
+names(data.hyp[,which(pancorr < 0.05) + bg - 1])
 ```
 
 ## Analysis of 2 measurements
+
+## Correlation between T1 and T2
 
 # Simulations
 ## Intro
