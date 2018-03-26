@@ -41,9 +41,11 @@ ng2 <- sum(data.all[,2]==2)
 ng3 <- sum(data.all[,2]==3)
 ng4 <- sum(data.all[,2]==4)
 
-paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, ", transgender men = ", ng3, ", transgender women = ",ng4, sep="")
+paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, 
+      ", transgender men = ", ng3, ", transgender women = ",ng4, sep="")
 
-hist(data.all[,2], xlab = "Gender", xaxt = "n", col = "seagreen3", border = "white", main = "Frequency of gender")
+hist(data.all[,2], xlab = "Gender", xaxt = "n", col = "seagreen3", 
+     border = "white", main = "Frequency of gender")
 axis(1,at=c(1:4),labels=c("CW", "CM", "TM", "TW"))
 ```
 
@@ -51,8 +53,10 @@ axis(1,at=c(1:4),labels=c("CW", "CM", "TM", "TW"))
 ```{r Age}
 summary(data.all[,4])
 
-hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white", main = "Histogram of age distribution", breaks = length(unique(data.all[,4])))
+hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white", 
+     main = "Histogram of age distribution", breaks = length(unique(data.all[,4])))
 ```
+
 Age of the participants ranged from 16 to 44. If we look at the distribution of age in the cis- and transgender group we see that the range is similar in both groups.
 
 ```{r agediff}
@@ -212,6 +216,9 @@ pan <- array(data=NA, dim = ln)
 for(i in bg:nd){
   tempan <- aov(data.hyp[,i] ~ as.factor(data.hyp[,2]))
   pan[i-bg+1] <- unlist(summary(tempan))[9]
+  
+  # construct boxplot for every region
+  boxplot(data.hyp[,i] ~ as.factor(data.hyp[,2]))
 }
 
 # FDR correction on p-values to correct for multiple testing
@@ -223,8 +230,14 @@ names(data.hyp[,which(pancorr < 0.05) + bg - 1])
 
 Why are there less regions for which the difference is statistically significant when the average is used compared to when one measure is used?
 
+###Post-hoc tests
+We conduct post-hoc t-tests on the statistically significant regions to determine which group differences cause the effect.
+```{r posthoc}
+
+```
+
 ## Correlation between T1 and T2
-```{r corr}
+```{r corr all}
 bg <- 36
 nd <- 108
 ln <- nd-bg+1
@@ -238,6 +251,22 @@ for(i in bg:nd){
 }
 
 summary(corrall)
+```
+
+```{r corr hyp}
+bg <- 3
+nd <- 28
+ln <- nd-bg+1
+
+# Object to save correlations
+corrhyp <- array(data=NA, dim = ln)
+
+# Compute ANOVA for every predictor and save p-value
+for(i in bg:nd){
+  corrhyp[i-bg+1] <- cor(x = data.hyp[,i], y = data.hyp[,i + ln])
+}
+
+summary(corrhyp)
 ```
 
 # Simulations
