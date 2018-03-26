@@ -1,7 +1,7 @@
 ---
 title: "Advantage of two scans in small populations demonstrated with a transgender dataset."
 author: "Freya Acar"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -204,6 +204,7 @@ names(data.hyp[,which(pancorr < 0.05) + bg - 1])
 bg <- 55
 nd <- 80
 ln <- nd-bg+1
+
 # Object to save p-values of ANOVA
 pan <- array(data=NA, dim = ln)
 
@@ -220,9 +221,24 @@ sum(pancorr < 0.05)
 names(data.hyp[,which(pancorr < 0.05) + bg - 1])
 ```
 
-## Analysis of 2 measurements
+Why are there less regions for which the difference is statistically significant when the average is used compared to when one measure is used?
 
 ## Correlation between T1 and T2
+```{r corr}
+bg <- 36
+nd <- 108
+ln <- nd-bg+1
+
+# Object to save correlations
+corrall <- array(data=NA, dim = ln)
+
+# Compute ANOVA for every predictor and save p-value
+for(i in bg:nd){
+  corrall[i-bg+1] <- cor(x = data.all[,i], y = data.all[,i + ln + 1])
+}
+
+summary(corrall)
+```
 
 # Simulations
 ## Intro
