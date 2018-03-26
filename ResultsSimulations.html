@@ -130,12 +130,12 @@ $(document).ready(function () {
 <div id="actual-data" class="section level1">
 <h1>Actual data</h1>
 <pre class="r"><code># Read in data
-data.hyp &lt;- read.csv(&quot;../1.Data/Behzad_hyp.csv&quot;, sep=&quot;;&quot;)
+data.hyp &lt;- read.csv(&quot;../1.Data/Behzad_hyp.csv&quot;, sep=&quot;\t&quot;)
 data.all &lt;- read.csv(&quot;../1.Data/Behzad_all.csv&quot;, sep=&quot;;&quot;)
 
 # Check data
 dim(data.hyp)</code></pre>
-<pre><code>## [1] 140   1</code></pre>
+<pre><code>## [1] 140 102</code></pre>
 <pre class="r"><code>dim(data.all)</code></pre>
 <pre><code>## [1] 141 820</code></pre>
 <div id="descriptives" class="section level2">
@@ -255,6 +255,20 @@ axis(1,at=c(1:4),labels=c(&quot;CW&quot;, &quot;CM&quot;, &quot;TM&quot;, &quot;
 </div>
 <div id="analysis-of-1-measurement" class="section level2">
 <h2>Analysis of 1 measurement</h2>
+<pre class="r"><code>bg &lt;- 55
+nd &lt;- 102
+ln &lt;- nd-bg
+# Object to save p-values of ANOVA
+pan &lt;- array(data=NA, dim = ln)
+
+# Compute ANOVA for every predictor and save p-value
+for(i in bg:nd){
+  tempan &lt;- aov(data.hyp[,2] ~ data.hyp[,i])
+  pan[i-bg+1] &lt;- unlist(summary(tempan))[9]
+}
+
+# FDR correction on p-values to correct for multiple testing
+pancorr &lt;- p.adjust(pan, method = &quot;fdr&quot;)</code></pre>
 </div>
 <div id="analysis-of-the-average" class="section level2">
 <h2>Analysis of the average</h2>

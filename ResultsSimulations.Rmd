@@ -14,7 +14,7 @@ knitr::opts_chunk$set(cache=TRUE)
 # Actual data
 ```{r ReadData}
 # Read in data
-data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep=";")
+data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep="\t")
 data.all <- read.csv("../1.Data/Behzad_all.csv", sep=";")
 
 # Check data
@@ -128,7 +128,22 @@ Out of 60 cisgender participants 3 reported migraine, 1 reported left ear surger
 ### Variables of interest
 
 ## Analysis of 1 measurement
+```{r onemeas}
+bg <- 55
+nd <- 102
+ln <- nd-bg
+# Object to save p-values of ANOVA
+pan <- array(data=NA, dim = ln)
 
+# Compute ANOVA for every predictor and save p-value
+for(i in bg:nd){
+  tempan <- aov(data.hyp[,2] ~ data.hyp[,i])
+  pan[i-bg+1] <- unlist(summary(tempan))[9]
+}
+
+# FDR correction on p-values to correct for multiple testing
+pancorr <- p.adjust(pan, method = "fdr")
+```
 
 ## Analysis of the average
 
