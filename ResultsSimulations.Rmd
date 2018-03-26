@@ -11,7 +11,7 @@ knitr::opts_chunk$set(cache=TRUE)
 
 # Introduction
 We have a dataset where FreeSurfer was used to determine cortical and subcortical brain anatomy in cis- and transgender population. For every participant two scans were administered (T1 and T2) and an average of both scans was computed. In this report we analyze the data from one scan and the average of both scans. Later on we show the advantage and increase in power obtained by admninistering 2 scans. 
-On participant (P22) was removed from the analysis because no anatomical data was available for this participant.
+One participant (P22) was removed from the analysis because no anatomical data was available for this participant.
 
 # Actual data
 We first read in the data. In data.all all available measurements are stored (descriptive and anatomical) while in data.hyp the anatomical results for every region of interest stored. Both files contain data of T1, T2 and the average. 
@@ -23,13 +23,17 @@ data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep=";", dec=",")
 # Check data
 dim(data.hyp)
 dim(data.all)
+```
 
+The regions we are interested in are the cerebellum, caudate, putamen, nucleus accumenbens, thalamus, fusiform, pre-central gyrus, post-central gyrus, frontal poles and inferior parietal gyrus. Here we list the variables we selected from FreeSurfer that comply with these regions.
+```{r roi}
 # Regions of interest
 names(data.hyp[,55:80])
 ```
 ## Descriptives
-### About the population
-Gender
+In this section population parameters are presented. 
+
+###Gender
 ```{r Gender}
 ng1 <- sum(data.all[,2]==1)
 ng2 <- sum(data.all[,2]==2)
@@ -41,15 +45,26 @@ paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, ", transgender men =
 hist(data.all[,2], xlab = "Gender", xaxt = "n", col = "seagreen3", border = "white", main = "Frequency of gender")
 axis(1,at=c(1:4),labels=c("CW", "CM", "TM", "TW"))
 ```
+There were 60 cisgender and 80 transgender participants. One participant (P22) was removed from the analysis because no anatomical data was available for this participant.
 
-Age
+###Age
 ```{r Age}
 summary(data.all[,4])
 
 hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white", main = "Histogram of age distribution", breaks = length(unique(data.all[,4])))
 ```
+Age of the participants ranged from 16 to 44. If we look at the distribution of age in the cis- and transgender group we see that the range is similar in both groups.
 
-Social-Economic Status
+```{r agediff}
+# Cisgender group
+summary(data.all[data.all[,2]<3,4])
+
+# Transgender group
+summary(data.all[data.all[,2]>2,4])
+```
+
+
+###Social-Economic Status
 ```{r SES}
 table(data.all[,5])
 ```
