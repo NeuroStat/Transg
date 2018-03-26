@@ -14,7 +14,7 @@ knitr::opts_chunk$set(cache=TRUE)
 # Actual data
 ```{r ReadData}
 # Read in data
-data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep="\t")
+data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep=";")
 data.all <- read.csv("../1.Data/Behzad_all.csv", sep=";")
 
 # Check data
@@ -23,6 +23,89 @@ dim(data.all)
 ```
 ## Descriptives
 ### About the population
+Gender
+```{r Gender}
+ng1 <- sum(data.all[,2]==1)
+ng2 <- sum(data.all[,2]==2)
+ng3 <- sum(data.all[,2]==3)
+ng4 <- sum(data.all[,2]==4)
+
+paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, ", transgender men = ", ng3, ", transgender women = ",ng4, sep="")
+```
+
+Age
+```{r Age}
+summary(data.all[,4])
+```
+
+Social-Economic Status
+```{r SES}
+table(data.all[,5])
+```
+
+Level of education
+```{r Education}
+table(data.all[,6])
+```
+
+Handedness
+```{r Handedness}
+table(data.all[,7])
+```
+
+Gender identity
+```{r Gender identity}
+summary(data.all[,8])
+table(data.all[,8])
+```
+
+Sexual orientation
+```{r Sexual orientation}
+summary(data.all[,9])
+table(data.all[,9])
+```
+
+### Mental illnesses
+#### Transgender group
+```{r Somatization}
+```
+
+```{r OCD}
+```
+
+
+```{r Interpersonal sensitivity}
+```
+
+
+```{r Depression}
+```
+
+```{r Anxiety}
+```
+
+```{r Hostility}
+```
+
+```{r Phobic Anxiety}
+```
+
+```{r Paranoia}
+```
+
+```{r Psychotism}
+```
+
+```{r Global severity}
+```
+
+#### Cisgender group
+```{r Past psychiatric history}
+```
+Past psychiatric condition
+
+Past medical condition
+
 ### Variables of interest
 
 ## Analysis of 1 measurement
