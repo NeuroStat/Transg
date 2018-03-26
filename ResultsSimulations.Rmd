@@ -31,11 +31,16 @@ ng3 <- sum(data.all[,2]==3)
 ng4 <- sum(data.all[,2]==4)
 
 paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, ", transgender men = ", ng3, ", transgender women = ",ng4, sep="")
+
+hist(data.all[,2], xlab = "Gender", xaxt = "n", col = "seagreen3", border = "white", main = "Frequency of gender")
+axis(1,at=c(1:4),labels=c("CW", "CM", "TM", "TW"))
 ```
 
 Age
 ```{r Age}
 summary(data.all[,4])
+
+hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white", main = "Histogram of age distribution", breaks = length(unique(data.all[,4])))
 ```
 
 Social-Economic Status
@@ -67,48 +72,63 @@ table(data.all[,9])
 
 ### Mental illnesses
 #### Transgender group
+Somatization
 ```{r Somatization}
+table(data.all[,22])
 ```
 
+Obsessive-compulsive disorder
 ```{r OCD}
+table(data.all[,23])
 ```
+Among the cisgender participants 1 had a history of obsession.
 
-
+Interpersonal sensitivity
 ```{r Interpersonal sensitivity}
+table(data.all[,24])
 ```
 
-
+Depression
 ```{r Depression}
+table(data.all[,25])
 ```
+Among the cisgender participants 3 had a history of depression.
 
 ```{r Anxiety}
+table(data.all[,26])
 ```
-
+Among the cisgender participants 1 had a history of a general anxiety disorder.
 ```{r Hostility}
+table(data.all[,27])
 ```
 
 ```{r Phobic Anxiety}
+table(data.all[,28])
 ```
 
 ```{r Paranoia}
+table(data.all[,29])
 ```
 
 ```{r Psychotism}
+table(data.all[,30])
 ```
 
 ```{r Global severity}
+table(data.all[,31])
 ```
 
 #### Cisgender group
-```{r Past psychiatric history}
-```
 Past psychiatric condition
+Out of 60 cisgender participants 3 had a history of depression, 1 reported a general anxiety disorder and 1 had a history of obsession. 
 
 Past medical condition
+Out of 60 cisgender participants 3 reported migraine, 1 reported left ear surgery, 1 participant had suffered from heart palpitations, 1 participants reported a history of meningitis, 1 participant reported they had asthma as a child and 1 partcipants reported favism.
 
 ### Variables of interest
 
 ## Analysis of 1 measurement
+
 
 ## Analysis of the average
 
