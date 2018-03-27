@@ -35,7 +35,7 @@ In this section population parameters are presented.
 
 ###Gender
 There were 60 cisgender and 80 transgender participants. One participant (P22) was removed from the analysis because no anatomical data was available for this participant. 
-```{r Gender}
+```{r Gender, out.width='.49\\linewidth', fig.width=3, fig.height=3,fig.show='hold',fig.align='center'}
 ng1 <- sum(data.all[,2]==1)
 ng2 <- sum(data.all[,2]==2)
 ng3 <- sum(data.all[,2]==3)
@@ -44,7 +44,7 @@ ng4 <- sum(data.all[,2]==4)
 paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, 
       ", transgender men = ", ng3, ", transgender women = ",ng4, sep="")
 
-hist(data.all[,2], xlab = "Gender", xaxt = "n", col = "seagreen3", 
+hist(data.all[,2], breaks = 5, xlab = "Gender", xaxt = "n", col = "seagreen3", 
      border = "white", main = "Frequency of gender")
 axis(1,at=c(1:4),labels=c("CW", "CM", "TM", "TW"))
 ```
@@ -188,52 +188,83 @@ bg <- 3
 nd <- 28
 ln <- nd-bg
 # Object to save p-values of ANOVA
-pan <- array(data=NA, dim = ln)
+pan.one <- array(data=NA, dim = ln)
 
 # Compute ANOVA for every predictor and save p-value
 for(i in bg:nd){
   tempan <- aov(data.hyp[,i] ~ as.factor(data.hyp[,2]))
-  pan[i-bg+1] <- unlist(summary(tempan))[9]
+  pan.one[i-bg+1] <- unlist(summary(tempan))[9]
 }
 
 # FDR correction on p-values to correct for multiple testing
-pancorr <- p.adjust(pan, method = "bonferroni")
-round(pancorr,3)
-sum(pancorr < 0.05)
-names(data.hyp[,which(pancorr < 0.05) + bg - 1])
+pancorr.one <- p.adjust(pan.one, method = "bonferroni")
+round(pancorr.one,3)
+sum(pancorr.one < 0.05)
+names(data.hyp[,which(pancorr.one < 0.05) + bg - 1])
 ```
 
 ## Analysis of the average
-```{r average two}
+```{r average, out.width='.49\\linewidth', fig.width=4, fig.height=3,fig.show='hold',fig.align='center'}
 bg <- 55
 nd <- 80
 ln <- nd-bg+1
+fac <- c(rep("CW",30), rep("CM",30), rep("TM",40), rep("TW",40))  # factor for participant group
 
 # Object to save p-values of ANOVA
-pan <- array(data=NA, dim = ln)
+pan.avg <- array(data=NA, dim = ln)
 
 # Compute ANOVA for every predictor and save p-value
 for(i in bg:nd){
   tempan <- aov(data.hyp[,i] ~ as.factor(data.hyp[,2]))
-  pan[i-bg+1] <- unlist(summary(tempan))[9]
+  pan.avg[i-bg+1] <- unlist(summary(tempan))[9]
   
   # construct boxplot for every region
-  boxplot(data.hyp[,i] ~ as.factor(data.hyp[,2]))
+  boxplot(data.hyp[,i] ~ fac, main = names(data.hyp)[i])
 }
 
 # FDR correction on p-values to correct for multiple testing
-pancorr <- p.adjust(pan, method = "bonferroni")
-round(pancorr,3)
-sum(pancorr < 0.05)
-names(data.hyp[,which(pancorr < 0.05) + bg - 1])
+pancorr.avg <- p.adjust(pan.avg, method = "bonferroni")
+round(pancorr.avg,3)
+sum(pancorr.avg < 0.05)
+names(data.hyp[,which(pancorr.avg < 0.05) + bg - 1])
 ```
 
-Why are there less regions for which the difference is statistically significant when the average is used compared to when one measure is used?
+Why are there less regions for which the difference is statistically significant when the average is used compared to when one measure is used? 
+To investigate this we look at the difference between the boxplots for one statistically significant region.
+```{r diff}
+boxplot(data.hyp[,26] ~ fac, main = names(data.hyp)[26])
+boxplot(data.hyp[,78] ~ fac, main = names(data.hyp)[78])
+```
 
 ###Post-hoc tests
 We conduct post-hoc t-tests on the statistically significant regions to determine which group differences cause the effect.
 ```{r posthoc}
+# create an object with all possible combinations
+  allcomb <- combn(c(1:4),2)
 
+# create object to save results
+  pt.one <- array(data = NA, dim = c(length(pan.one),dim(allcomb)[2]))
+  pt.avg <- array(data = NA, dim = c(length(pan.avg),dim(allcomb)[2]))
+
+# Left Cerebellum White Matter
+  # 1 measure
+  bg <- 3
+  nd <- 28
+  for(r in bg:nd)
+    for(i in 1:dim(allcomb)[2]){
+      pt.one[r-bg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+    }
+  
+  round(pt.one,3)
+  # Average
+  bg <- 55
+  nd <- 80
+  for(r in bg:nd)
+    for(i in 1:dim(allcomb)[2]){
+      pt.avg[r-bg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+    }
+  
+  round(pt.avg,3)
 ```
 
 ## Correlation between T1 and T2
@@ -270,6 +301,7 @@ summary(corrhyp)
 ```
 
 # Simulations
+RESULTS OF THE SIMULATIONS STILL NEED TO FINISH, these take a long time to run.
 ## Intro
 ## Code
 ```{r Simulations setup, echo = FALSE, warning = FALSE, include = FALSE}
