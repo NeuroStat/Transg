@@ -187,6 +187,8 @@ Out of 60 cisgender participants 3 reported migraine, 1 reported left ear surger
 bg <- 3
 nd <- 28
 ln <- nd-bg
+fac <- c(rep("CW",30), rep("CM",30), rep("TM",40), rep("TW",40))  # factor for participant group
+
 # Object to save p-values of ANOVA
 pan.one <- array(data=NA, dim = ln)
 
@@ -194,6 +196,8 @@ pan.one <- array(data=NA, dim = ln)
 for(i in bg:nd){
   tempan <- aov(data.hyp[,i] ~ as.factor(data.hyp[,2]))
   pan.one[i-bg+1] <- unlist(summary(tempan))[9]
+  
+  boxplot(data.hyp[,i] ~ fac, main = names(data.hyp)[i])
 }
 
 # FDR correction on p-values to correct for multiple testing
@@ -237,7 +241,7 @@ boxplot(data.hyp[,78] ~ fac, main = names(data.hyp)[78])
 ```
 
 ###Post-hoc tests
-We conduct post-hoc t-tests on the statistically significant regions to determine which group differences cause the effect.
+We conduct post-hoc t-tests on the statistically significant regions to determine which group differences cause the effect. The p-values are uncorrected at this point and I computed them for every region. 
 ```{r posthoc}
 # create an object with all possible combinations
   allcomb <- combn(c(1:4),2)
@@ -254,8 +258,8 @@ We conduct post-hoc t-tests on the statistically significant regions to determin
     for(i in 1:dim(allcomb)[2]){
       pt.one[r-bg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
     }
-  
   round(pt.one,3)
+  
   # Average
   bg <- 55
   nd <- 80
@@ -298,6 +302,8 @@ for(i in bg:nd){
 }
 
 summary(corrhyp)
+
+# plot with correlations? Which region lies where?
 ```
 
 # Simulations
