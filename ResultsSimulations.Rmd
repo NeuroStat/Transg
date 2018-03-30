@@ -32,6 +32,9 @@ One participant (P22) was removed from the analysis because no anatomical data w
 ## Startup <a name="startup"></a>  
 We first read in the data. In data.all all available measurements are stored (descriptive and anatomical) while in data.hyp the anatomical results for every region of interest stored. Both files contain data of T1, T2 and the average. 
 ```{r ReadData}
+# Libraries
+library(knitr)
+
 # Read in data
 data.all <- read.csv("../1.Data/Behzad_all.csv", sep=";", dec=",")
 data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep=";", dec=",")
@@ -206,62 +209,63 @@ Out of 60 cisgender participants 3 reported migraine, 1 reported left ear surger
 ## Analysis of the data <a name="ansect"></a>
 ### Analysis of one measurement <a name="anonesect"></a>
 ```{r onemeas, out.width='.49\\linewidth', fig.width=4, fig.height=3,fig.show='hold',fig.align='center'}
-bg <- 3
-nd <- 24
-ln <- nd-bg
+bg.one <- 3
+nd.one <- 24
+ln <- nd.one-bg.one
 fac <- c(rep("CW",30), rep("CM",30), rep("TM",40), rep("TW",40))  # factor for participant group
 
 # Object to save p-values of ANOVA
 pan.one <- array(data=NA, dim = ln)
 
 # Compute ANOVA for every predictor and save p-value
-for(i in bg:nd){
+for(i in bg.one:nd.one){
   tempan <- aov(data.hyp[,i] ~ as.factor(data.hyp[,2]))
-  pan.one[i-bg+1] <- unlist(summary(tempan))[9]
-  
-  boxplot(data.hyp[,i] ~ fac, main = names(data.hyp)[i])
+  pan.one[i-bg.one+1] <- unlist(summary(tempan))[9]
 }
 
 # FDR correction on p-values to correct for multiple testing
 pancorr.one <- p.adjust(pan.one, method = "bonferroni")
-round(pancorr.one,3)
 sum(pancorr.one < 0.05)
-names(data.hyp[,which(pancorr.one < 0.05) + bg - 1])
+
+kable(cbind(names(data.hyp[,bg.one:nd.one]), round(pancorr.one, 3)))
 ```
 
 \newpage
 
 ### Analysis of the average <a name="anavgsect"></a>
 ```{r average, out.width='.49\\linewidth', fig.width=4, fig.height=3,fig.show='hold',fig.align='center'}
-bg <- 47
-nd <- 68
-ln <- nd-bg+1
+bg.avg <- 47
+nd.avg <- 68
+ln <- nd.avg-bg.avg+1
 fac <- c(rep("CW",30), rep("CM",30), rep("TM",40), rep("TW",40))  # factor for participant group
 
 # Object to save p-values of ANOVA
 pan.avg <- array(data=NA, dim = ln)
 
 # Compute ANOVA for every predictor and save p-value
-for(i in bg:nd){
+for(i in bg.avg:nd.avg){
   tempan <- aov(data.hyp[,i] ~ as.factor(data.hyp[,2]))
-  pan.avg[i-bg+1] <- unlist(summary(tempan))[9]
-  
-  # construct boxplot for every region
-  boxplot(data.hyp[,i] ~ fac, main = names(data.hyp)[i])
+  pan.avg[i-bg.avg+1] <- unlist(summary(tempan))[9]
 }
 
 # FDR correction on p-values to correct for multiple testing
 pancorr.avg <- p.adjust(pan.avg, method = "bonferroni")
-round(pancorr.avg,3)
 sum(pancorr.avg < 0.05)
-names(data.hyp[,which(pancorr.avg < 0.05) + bg - 1])
+
+kable(cbind(names(data.hyp[,bg.avg:nd.avg]), round(pancorr.avg, 3)))
 ```
 
 Why are there less regions for which the difference is statistically significant when the average is used compared to when one measure is used? 
 To investigate this we look at the difference between the boxplots for one statistically significant region.
-```{r diff}
+```{r diff, out.width='.49\\linewidth', fig.width=4, fig.height=3,fig.show='hold',fig.align='center'}
 boxplot(data.hyp[,22] ~ fac, main = names(data.hyp)[26])
 boxplot(data.hyp[,66] ~ fac, main = names(data.hyp)[78])
+
+for(i in bg.one:nd.one){
+  # construct boxplot for every region
+  boxplot(data.hyp[,i] ~ fac, main = names(data.hyp)[i])
+  boxplot(data.hyp[,i + 44] ~ fac, main = names(data.hyp)[i + 44])
+}
 ```
 
 \newpage
@@ -271,6 +275,12 @@ We conduct post-hoc t-tests on the statistically significant regions to determin
 ```{r posthoc}
 # create an object with all possible combinations
   allcomb <- combn(c(1:4),2)
+  allcomb.txt <- array(data=NA, dim = dim(allcomb)[2])
+  labels.g <- c("CW", "CM", "TM", "TW")
+  for(i in 1:dim(allcomb)[2]){
+    allcomb.txt[i] <- paste(labels.g[allcomb[1,i]], " vs ", labels.g[allcomb[2,i]], sep="")
+  }
+  
 
 # create object to save results
   pt.one <- array(data = NA, dim = c(length(pan.one),dim(allcomb)[2]))
@@ -278,23 +288,25 @@ We conduct post-hoc t-tests on the statistically significant regions to determin
 
 # Left Cerebellum White Matter
   # 1 measure
-  bg <- 3
-  nd <- 24
-  for(r in bg:nd)
+  bg.one <- 3
+  nd.one <- 24
+  for(r in bg.one:nd.one)
     for(i in 1:dim(allcomb)[2]){
-      pt.one[r-bg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+      pt.one[r-bg.one+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
     }
-  round(pt.one,3)
+  kable(cbind(c(" ",names(data.hyp[,bg.one:nd.one])),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.one,3))))
   
   # Average
-  bg <- 47
-  nd <- 68
-  for(r in bg:nd)
+  bg.avg <- 47
+  nd.avg <- 68
+  for(r in bg.avg:nd.avg)
     for(i in 1:dim(allcomb)[2]){
-      pt.avg[r-bg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+      pt.avg[r-bg.avg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
     }
   
-  round(pt.avg,3)
+  
+  
+  kable(cbind(c(" ",names(data.hyp[,bg.avg:nd.avg])),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.avg,3))))
 ```
 
 \newpage
@@ -318,16 +330,16 @@ summary(corrall)
 ```
 
 ```{r corr hyp}
-bg <- 3
-nd <- 24
-ln <- nd-bg+1
+bg.one <- 3
+nd.one <- 24
+ln <- nd.one-bg.one+1
 
 # Object to save correlations
 corrhyp <- array(data=NA, dim = ln)
 
 # Compute ANOVA for every predictor and save p-value
-for(i in bg:nd){
-  corrhyp[i-bg+1] <- cor(x = data.hyp[,i], y = data.hyp[,i + ln])
+for(i in bg.one:nd.one){
+  corrhyp[i-bg.one+1] <- cor(x = data.hyp[,i], y = data.hyp[,i + ln])
 }
 
 summary(corrhyp)
