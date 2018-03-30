@@ -224,7 +224,7 @@ for(i in bg.one:nd.one){
 }
 
 # FDR correction on p-values to correct for multiple testing
-pancorr.one <- p.adjust(pan.one, method = "bonferroni")
+pancorr.one <- p.adjust(pan.one, method = "fdr")
 sum(pancorr.one < 0.05)
 
 kable(cbind(names(data.hyp[,bg.one:nd.one]), round(pancorr.one, 3)))
@@ -249,7 +249,7 @@ for(i in bg.avg:nd.avg){
 }
 
 # FDR correction on p-values to correct for multiple testing
-pancorr.avg <- p.adjust(pan.avg, method = "bonferroni")
+pancorr.avg <- p.adjust(pan.avg, method = "fdr")
 sum(pancorr.avg < 0.05)
 
 kable(cbind(names(data.hyp[,bg.avg:nd.avg]), round(pancorr.avg, 3)))
@@ -290,23 +290,36 @@ We conduct post-hoc t-tests on the statistically significant regions to determin
   # 1 measure
   bg.one <- 3
   nd.one <- 24
-  for(r in bg.one:nd.one)
-    for(i in 1:dim(allcomb)[2]){
-      pt.one[r-bg.one+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+  pt.corr.one <- array(data=NA, dim=dim(pt.one))
+  for(r in bg.one:nd.one){
+    if (pan.one[r-bg.one+1] > 0.05) {
+        pt.one[r-bg.one+1,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.one[r-bg.one+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+        pt.corr.one[r - bg.one + 1,] <- p.adjust(pt.one[r - bg.one + 1,], method = "bonferroni")
+      }
     }
-  kable(cbind(c(" ",names(data.hyp[,bg.one:nd.one])),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.one,3))))
+  }
+  
+  kable(cbind(c(" ",names(data.hyp[,bg.one:nd.one])),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.one,3))))
   
   # Average
   bg.avg <- 47
   nd.avg <- 68
-  for(r in bg.avg:nd.avg)
-    for(i in 1:dim(allcomb)[2]){
-      pt.avg[r-bg.avg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+  pt.corr.avg <- array(data=NA, dim=dim(pt.avg))
+  for(r in bg.avg:nd.avg){
+    if (pan.avg[r-bg.avg+1] > 0.05) {
+        pt.avg[r-bg.avg+1,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.avg[r-bg.avg+1,i] <- unlist(t.test(data.hyp[data.hyp[,2]==allcomb[1,i],r], data.hyp[data.hyp[,2]==allcomb[2,i],r])[3])
+        pt.corr.avg[r - bg.avg + 1,] <- p.adjust(pt.avg[r - bg.avg + 1,], method = "bonferroni")
+      }
     }
+  }
   
-  
-  
-  kable(cbind(c(" ",names(data.hyp[,bg.avg:nd.avg])),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.avg,3))))
+  kable(cbind(c(" ",names(data.hyp[,bg.avg:nd.avg])),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.avg,3))))
 ```
 
 \newpage
@@ -350,7 +363,6 @@ summary(corrhyp)
 \newpage
 
 ## Simulations <a name="simulations"></a>  
-RESULTS OF THE SIMULATIONS STILL NEED TO FINISH, these take a long time to run.  
 ### Intro  
 ### Code  
 ```{r Simulations setup, echo = FALSE, warning = FALSE, include = FALSE}
