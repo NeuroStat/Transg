@@ -1,6 +1,7 @@
 ---
-title: "Advantage of two scans in small populations demonstrated with a transgender dataset."
+title: "ResultsT"
 author: "Freya Acar"
+date: "4/11/2018"
 output: pdf_document
 ---
 
@@ -14,11 +15,8 @@ knitr::opts_chunk$set(cache=TRUE)
 2. [Startup](#startup)
 3. [Descriptives](#descriptives)
 4. [Analysis](#ansect)
-    + [Analysis of one measurement](#ansectone)
-    + [Analysis of the average](#ansectavg)
-    + [Post-hoc t-tests](#posthocsect)
-5. [Correlations between T1 and T2](#correlations)
-6. [Simulations](#simulations)
+5. [Posthoc](#posthocsect)
+6. [Correlations between T1 and T2](#correlations)
 7. [Discussion](#discussion)
 
 \newpage
@@ -82,133 +80,27 @@ hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white",
 Age of the participants ranged from 16 to 44. If we look at the distribution of age in the cis- and transgender group we see that the range is similar in both groups.
 
 ```{r agediff}
-# Cisgender group
-summary(data.all[data.all[,2]<3,4])
-
-# Transgender group
-summary(data.all[data.all[,2]>2,4])
-```
-
-
-###Social-Economic Status
-I don't know the interpretation of the numbers below (e.g. to which SES which number refers), I just added the frequency tables.
-```{r SES}
-table(data.all[,5])
-```
-
-###Level of education
-```{r Education}
-table(data.all[,6])
-```
-
-###Handedness
-```{r Handedness}
-table(data.all[,7])
-```
-
-###Gender identity
-```{r Gender identity}
-summary(data.all[,8])
-table(data.all[,8])
-
 # Cisgender women
-summary(data.all[data.all[,2]==1,8])
+mean(data.all[data.all[,2]==1,4])
+sd(data.all[data.all[,2]==1,4])
 
 # Cisgender men
-summary(data.all[data.all[,2]==2,8])
+mean(data.all[data.all[,2]==2,4])
+sd(data.all[data.all[,2]==2,4])
 
 # Transgender men
-summary(data.all[data.all[,2]==3,8])
+mean(data.all[data.all[,2]==3,4])
+sd(data.all[data.all[,2]==3,4])
 
 # Transgender women
-summary(data.all[data.all[,2]==4,8])
+mean(data.all[data.all[,2]==4,4])
+sd(data.all[data.all[,2]==4,4])
 ```
-
-###Sexual orientation
-```{r Sexual orientation}
-summary(data.all[,9])
-table(data.all[,9])
-
-# Cisgender women
-summary(data.all[data.all[,2]==1,9])
-
-# Cisgender men
-summary(data.all[data.all[,2]==2,9])
-
-# Transgender women
-summary(data.all[data.all[,2]==3,9])
-
-# Transgender men
-summary(data.all[data.all[,2]==4,9])
-```
-
-
-### Mental illnesses
-There are no available measures for the cisgender group. 
-####Somatization
-```{r Somatization}
-table(data.all[,22])
-```
-
-####Obsessive-compulsive disorder
-```{r OCD}
-table(data.all[,23])
-```
-Among the cisgender participants 1 had a history of obsession.
-
-####Interpersonal sensitivity
-```{r Interpersonal sensitivity}
-table(data.all[,24])
-```
-
-####Depression
-```{r Depression}
-table(data.all[,25])
-```
-Among the cisgender participants 3 had a history of depression.
-
-####Anxiety
-```{r Anxiety}
-table(data.all[,26])
-```
-Among the cisgender participants 1 had a history of a general anxiety disorder.
-
-####Hostility
-```{r Hostility}
-table(data.all[,27])
-```
-
-####Phobic anxiety
-```{r Phobic Anxiety}
-table(data.all[,28])
-```
-
-####Paranoia
-```{r Paranoia}
-table(data.all[,29])
-```
-
-####Psychotism
-```{r Psychotism}
-table(data.all[,30])
-```
-
-####Global severity
-```{r Global severity}
-table(data.all[,31])
-```
-
-#### Cisgender group
-Past psychiatric condition
-Out of 60 cisgender participants 3 had a history of depression, 1 reported a general anxiety disorder and 1 had a history of obsession. 
-
-Past medical condition
-Out of 60 cisgender participants 3 reported migraine, 1 reported left ear surgery, 1 participant had suffered from heart palpitations, 1 participants reported a history of meningitis, 1 participant reported they had asthma as a child and 1 partcipants reported favism.
 
 \newpage
 
 ## Analysis of the data <a name="ansect"></a>
-### Analysis of one measurement <a name="anonesect"></a>
+### Analysis of one measurement
 We compute an ANOVA on all hypothesis regions with the data from T1.
 ```{r onemeas, out.width='.49\\linewidth', fig.width=4, fig.height=3,fig.show='hold',fig.align='center'}
 bg.one <- 3
@@ -234,7 +126,7 @@ kable(cbind(names(data.hyp[,bg.one:nd.one]), round(pancorr.one, 3)))
 
 \newpage
 
-### Analysis of the average <a name="anavgsect"></a>
+### Analysis of the average
 We computed the same ANOVA on the average.
 ```{r average, out.width='.49\\linewidth', fig.width=4, fig.height=3,fig.show='hold',fig.align='center'}
 bg.avg <- 47
@@ -273,7 +165,7 @@ for(i in bg.one:nd.one){
 
 \newpage
 
-### Post-hoc tests <a name="posthocsect"></a>
+## Post-hoc tests <a name="posthocsect"></a>
 We conduct post-hoc t-tests on the statistically significant regions to determine which group differences cause the effect. The p-values are uncorrected at this point and I computed them for every region. 
 ```{r posthoc}
 # create an object with all possible combinations
@@ -362,159 +254,6 @@ summary(corrhyp)
 
 # plot with correlations? Which region lies where?
 ```
-
-\newpage
-
-## Simulations <a name="simulations"></a>  
-### Intro  
-### Code  
-```{r Simulations setup, echo = FALSE, warning = FALSE, include = FALSE}
-# Working directory
-```
-First we need to define the parameters of our simulations. 
-```{r Simulations parameters}
-# variance/sd epsilon
-seps <- 1  
-
-# Number of simulations
-asim <- 5000
-
-# Effect size
-delta <- 0.8
-
-# Number of participants
-n <- 30
-n.1 <- n/2      # in the first group
-n.2 <- n/2      # in the second group
-
-# Level of statistical significance 
-alpha <- 0.05
-
-# Correlation between first and second measurement
-rho <- seq(0.01,0.99,0.01)
-```
-
-Then we prepare objects to store our results
-```{r Create objects}
-# Number of simulations
-pow.mean1<-vector("numeric",length(rho))
-pow.mean2<-vector("numeric",length(rho))
-pow.mean3<-vector("numeric",length(rho))
-pow.mean4<-vector("numeric",length(rho))
-```
-
-```{r Load libraries, warning=FALSE, echo=FALSE}
-# Libraries
-library(lme4)
-library(lmerTest)
-```
-
-```{r Simulations code}
-# Loop over preset correlations between measure 1 and measure 2
-for(i in 1:length(rho)){
-  # Create objects to store power in for every simulations
-  pow.1<-vector("numeric",asim)
-  pow.2<-vector("numeric",asim)
-  pow.3<-vector("numeric",asim)
-  pow.4<-vector("numeric",asim)
-  
-  for(k in 1:asim){
-    # Scenario 1: lower bound of power curve
-    # two groups with equal amount of subjects, groups differ with an effect size delta
-    # Construct a vector that determines in which group each subject falls
-    x<-c(rep(1,n.1),rep(0,n.2))
-    
-    # Vector with observations in the set of participants
-    y<-rnorm(n,0,seps)       
-    # Add an effect size to the first group
-    y[1:n.1]<-y[1:n.1]+delta    
-    
-    # Boolean of whether an effect is detected, this is later used to compute the power
-    pow.1[k]<-summary(lm(y~x))$coef[2,4]<alpha
-    
-    # Scenario 2: upper bound of power curve
-    # two groups with equal amount of subjects, twice as many as scenario 1, groups differ with an effect size delta
-    # Construct a vector that determines in which group each subject falls
-    x2<-c(rep(1,(n.1*2)),rep(0,(n.2*2)))
-    
-    # Vector with observations in the set of participants
-    y2<-rnorm(n*2,0,seps)
-    # Add an effect size to the first group
-    y2[1:(n.1*2)]<-y2[1:(n.1*2)]+delta
-    
-    # Boolean of whether an effect is detected, this is later used to compute the power
-    pow.2[k]<-summary(lm(y2~x2))$coef[2,4]<alpha
-    
-    # Scenario 3: two measurements for every subject, same amount of subjects as in scenario 1
-    # two groups with equal amount of subjects, correlation between measurements, groups differ with an effect size delta
-    # Construct a vector that determines in which group each subject falls
-    x3<-c(rep(1,n.1),rep(0,n.2),rep(1,n.1),rep(0,n.2))
-    
-    # Vector with first observation of every participant
-    y3<-rnorm(n,0,seps)
-    # Factor to multiply second set of observations with to obtain results in line with predefined correlation
-    alpac<-sqrt(rho[i]^2/(1-rho[i]^2)*seps)
-    # Construct second set of observations that are correlated with first set (y3)
-    y3.2u<-alpac*y3+rnorm(n)
-    y3.2<-y3.2u/sqrt(var(y3.2u))
-    # Add effect size to the first group of participants
-    y3[1:n.1]<-y3[1:n.1]+delta
-    y3.2[1:n.1]<-y3.2[1:n.1]+delta
-    # Combine both observations in 1 vector
-    y3o<-c(y3,y3.2)
-    
-    # Define subject numbers
-    subject<-rep(1:n,2)
-    # Construct mixed model
-    mm<-lmer(y3o ~ x3 + (1 | subject))   
-    # Boolean of whether an effect is detected, this is later used to compute the power
-    pow.3[k]<-summary(mm)$coef[2,5]<alpha
-    
-    # Scenario 4: What if we work with the average?
-    y3m<-(y3+y3.2)/2
-    # Boolean of whether an effect is detected, this is later used to compute the power
-    pow.4[k]<-summary(lm(y3m~x))$coef[2,4]<alpha
-  }
-  pow.mean1[i]<-mean(pow.1)
-  pow.mean2[i]<-mean(pow.2)
-  pow.mean3[i]<-mean(pow.3)
-  pow.mean4[i]<-mean(pow.4)
-}
-```
-
-
-### Results
-```{r Simulation results}
-# power of taking both measures into account
-plot(rho,pow.mean1,ylim=c(0,1), type="l")
-par(new = TRUE)
-plot(rho,pow.mean2,ylim=c(0,1), type="l")
-par(new = TRUE)
-plot(rho,pow.mean3,ylim=c(0,1), type="p", col = "goldenrod3", pch = 2)
-
-# power of using the average
-plot(rho,pow.mean1,ylim=c(0,1), type="l")
-par(new = TRUE)
-plot(rho,pow.mean2,ylim=c(0,1), type="l")
-par(new = TRUE)
-plot(rho,pow.mean3,ylim=c(0,1), type="p", col = "seagreen3", pch = 16)
-```
-
-If we overlay both plots we see that there is a lot of overlap. This can also be demonstrated by looking at the results that are exactly the same.
-```{r Compare results}
-table(pow.mean3==pow.mean4)
-
-# Overlap of both plots
-plot(rho,pow.mean1,ylim=c(0,1), type="l")
-par(new = TRUE)
-plot(rho,pow.mean2,ylim=c(0,1), type="l")
-par(new = TRUE)
-plot(rho,pow.mean3,ylim=c(0,1), type="p", col = "goldenrod3", pch = 2)
-par(new = TRUE)
-plot(rho,pow.mean3,ylim=c(0,1), type="p", col = "seagreen3", pch = 16)
-```
-
-\newpage
 
 ## Discussion <a name="discussion"></a>
 

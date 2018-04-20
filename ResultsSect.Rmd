@@ -1,0 +1,466 @@
+---
+title: "ResultsSect"
+author: "Freya Acar"
+date: "4/11/2018"
+# header-includes:
+#   - \usepackage{pdflscape}
+#   - \newcommand{\blandscape}{\begin{landscape}}
+#   - \newcommand{\elandscape}{\end{landscape}}
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+#
+
+## Descriptives
+### Participants
+Thirty CW (mean age = 25.80 years, SD = 3.84), 30 CM (mean age = 26.03 years, SD = 5.26), 40 TM (mean age = 24.38 years, SD = 5.35), and 41 TW (mean age = 24.88 years, SD = 6.20) participated in the study. One TW participant was excluded because no results could be extracted from FreeSurfer. Demographics can be observed in Table 1. The sample did not differ significantly in age [F(3, 136) = 0.74, p = 0.528].
+
+
+### Table with demographic information
+```{r read data, warning = FALSE, echo = FALSE}
+# Read in data
+  data.all <- read.csv("../1.Data/Behzad_all.csv", sep=";", dec=",")
+  data.hyp <- read.csv("../1.Data/Behzad_hyp.csv", sep=";", dec=",")
+```
+
+```{r table1, warning = FALSE, echo = FALSE}
+library(knitr)
+
+dig <- 2 # number of digits after comma
+vars <- c("Group", "Age", "SES", "Education", "Handedness")
+groupn <- c("CW", "CM", "TM", "TW")
+ager <- c(paste(round(mean(data.all[data.all[,2]==1,4]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==1,4]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==2,4]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==2,4]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==3,4]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==3,4]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==4,4]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==4,4]), digits = dig), sep=""))
+SESr <- c(paste(round(mean(data.all[data.all[,2]==1,5]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==1,5]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==2,5]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==2,5]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==3,5]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==3,5]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==4,5]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==4,5]), digits = dig), sep=""))
+Edr <- c(paste(round(mean(data.all[data.all[,2]==1,6]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==1,6]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==2,6]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==2,6]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==3,6]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==3,6]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==4,6]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==4,6]), digits = dig), sep=""))
+Hdr <- c(paste(round(mean(data.all[data.all[,2]==1,7]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==1,7]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==2,7]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==2,7]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==3,7]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==3,7]), digits = dig), sep=""),
+          paste(round(mean(data.all[data.all[,2]==4,7]), digits = dig), " ± ", 
+                round(sd(data.all[data.all[,2]==4,7]), digits = dig), sep=""))
+kable(cbind(vars, rbind(groupn, ager, SESr, Edr, Hdr)))
+```
+
+### Code for demographics
+The code can be found in markdown version of this file, it is not printed on the PDF
+```{r demogr, warning = FALSE, echo = FALSE, results='hide'}
+# Groups
+  ng1 <- sum(data.all[,2]==1)
+  ng2 <- sum(data.all[,2]==2)
+  ng3 <- sum(data.all[,2]==3)
+  ng4 <- sum(data.all[,2]==4)
+  
+  paste("Cisgender women = ", ng1, ", cisgender men = ", ng2, 
+        ", transgender men = ", ng3, ", transgender women = ",ng4, sep="")
+
+# Age
+  # Cisgender women
+  mean(data.all[data.all[,2]==1,4])
+  sd(data.all[data.all[,2]==1,4])
+  
+  # Cisgender men
+  mean(data.all[data.all[,2]==2,4])
+  sd(data.all[data.all[,2]==2,4])
+  
+  # Transgender men
+  mean(data.all[data.all[,2]==3,4])
+  sd(data.all[data.all[,2]==3,4])
+  
+  # Transgender women
+  mean(data.all[data.all[,2]==4,4])
+  sd(data.all[data.all[,2]==4,4])
+  
+  # Difference between groups?
+  fit <- lm(formula = data.all[,4] ~ as.factor(data.all[,2]))
+  anova(fit)
+```
+
+Plot with ages
+```{r plot age, echo = FALSE}
+hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white", 
+     main = "Histogram of age distribution", breaks = length(unique(data.all[,4])))
+```
+
+## Results
+### Repeated measures
+Questions: do we want a correlation between regions of the same participant?  
+
+Everything for volume is computed here:  
+```{r repmes volume, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
+# Libraries
+  library(lme4)
+  library(lmerTest)
+  library(nlme)
+
+# Construct data
+  nt <- 2      # number of time points
+  nr <- 22     # number of regions
+  nsu <- dim(data.hyp)[1]
+  
+  suc <- rep(1:nsu, each = nt*nr)
+  tc <- rep(1:nt, nsu*nr)
+  rc <- rep(rep(1:nr, each = nt), nsu)
+  gc <- c(rep(c("CW", "CM"), each = (30*nt*nr)), rep(c("TM", "TW"), each = (40*nt*nr)))
+  
+  j <- 0       # counter for for-loop
+  pasteregions <- array(data=NA, dim = nt*nr*nsu)
+  for(i in 1:nsu){
+    for(r in 1:nr){
+      for(t in 1:nt){
+        j <- j + 1
+        pasteregions[j] <- data.hyp[i,(2+r+(nr*(t-1)))]
+      }
+    }
+  }
+  data.lmer <- data.frame(cbind(suc, tc, rc, gc, pasteregions))
+  data.lmer$pasteregions <- as.numeric(as.character(data.lmer$pasteregions))
+
+# Fit model
+  p.lme <- array(data = NA, dim = nr)
+  for(r in 1:nr){
+    mf <- lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer[data.lmer$rc == r,])
+    p.lme[r] <- anova(mf)[2,4]
+  }
+  
+# FDR correction
+  p.corr <- p.adjust(p.lme, method = "fdr")
+  kable(cbind(names(data.hyp[,3:24]), round(p.corr, 3)))
+  
+# Data with age and total volume
+  ac <- rep(data.all[,4], each = nt*nr)
+  vc.1 <- rep(data.all[,108], each = nt*nr)
+  vc.2 <- rep(data.all[,182], each = nt*nr)
+  vc <- vc.1
+  for(i in 1:length(vc.1)){
+    vc[i] <- ifelse(i%%2==1, vc.1[i], vc.2[i])
+  }
+  
+  data.lmer.cov <- data.frame(cbind(suc, tc, rc, gc, ac, vc, pasteregions))
+  data.lmer.cov$pasteregions <- as.numeric(as.character(data.lmer.cov$pasteregions))
+  data.lmer.cov$ac <- as.numeric(as.character(data.lmer.cov$ac))
+  data.lmer.cov$vc <- as.numeric(as.character(data.lmer.cov$vc))
+  
+# Fit model
+  p.lme.cov <- array(data = NA, dim = nr)
+  for(r in 1:nr){
+    mf <- lme(pasteregions ~ 1 + gc + ac + vc, random = ~ 1 | suc, data = data.lmer.cov[data.lmer.cov$rc == r,])
+    p.lme.cov[r] <- anova(mf)[2,4]
+  }
+  
+# FDR correction
+  p.cov.corr <- p.adjust(p.lme.cov, method = "fdr")
+  kable(cbind(names(data.hyp[,3:24]), round(p.cov.corr, 3)))
+```
+### Post-hoc tests
+```{r posthoc, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
+# create an object with all possible combinations
+  allcomb <- combn(c(1:4),2)
+  allcomb.txt <- array(data=NA, dim = dim(allcomb)[2])
+  labels.g <- c("CW", "CM", "TM", "TW")
+  for(i in 1:dim(allcomb)[2]){
+    allcomb.txt[i] <- paste(labels.g[allcomb[1,i]], " vs ", labels.g[allcomb[2,i]], sep="")
+  }
+
+
+# create object to save results
+  pt <- array(data = NA, dim = c(length(p.corr),dim(allcomb)[2]))
+  pt.cov <- array(data = NA, dim = c(length(p.cov.corr),dim(allcomb)[2]))
+  pt.corr <- array(data=NA, dim=dim(pt))
+  pt.cov.corr <- array(data=NA, dim=dim(pt.cov))
+  
+# T-tests and correct results
+  for(r in 1:nr){
+    # general model
+    if (p.corr[r] > 0.05) {
+        pt[r,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt[r,i] <- unlist(t.test(data.lmer[data.lmer$rc==r & data.lmer$gc==labels.g[allcomb[1,i]],5], data.lmer[data.lmer$rc==r & data.lmer$gc==labels.g[allcomb[2,i]],5])[3])
+      }
+      pt.corr[r,] <- p.adjust(pt[r,], method = "bonferroni")
+    }
+    # model with covariates
+    if (p.cov.corr[r] > 0.05) {
+        pt.cov[r,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.cov[r,i] <- unlist(t.test(data.lmer.cov[data.lmer.cov$rc==r & data.lmer.cov$gc==labels.g[allcomb[1,i]],7], data.lmer.cov[data.lmer.cov$rc==r & data.lmer.cov$gc==labels.g[allcomb[2,i]],7])[3])
+      }
+      pt.cov.corr[r,] <- p.adjust(pt.cov[r,], method = "bonferroni")
+    }
+  }
+```
+
+In the tables the results for the model with and without covariates are displayed.   
+
+```{r tables, echo = FALSE}
+# Model without covariates
+  kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr,3))))
+
+# Model with age and total intracranial volume as covariates
+  kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr,3))))
+```
+
+Then we do the same computations for thickness:  
+
+```{r repmes thickn, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
+# Construct data
+  nt <- 2      # number of time points
+  nr <- 10     # number of regions
+  nsu <- dim(data.hyp)[1]
+  
+  suc <- rep(1:nsu, each = nt*nr)
+  tc <- rep(1:nt, nsu*nr)
+  rc <- rep(rep(1:nr, each = nt), nsu)
+  gc <- c(rep(c("CW", "CM"), each = (30*nt*nr)), rep(c("TM", "TW"), each = (40*nt*nr)))
+  
+  j <- 0       # counter for for-loop
+  pasteregions <- array(data=NA, dim = nt*nr*nsu)
+  for(i in 1:nsu){
+    for(r in 1:nr){
+      for(t in 1:nt){
+        j <- j + 1
+        pasteregions[j] <- data.hyp[i,(46+r+(nr*(t-1)))]
+      }
+    }
+  }
+  data.lmer.th <- data.frame(cbind(suc, tc, rc, gc, pasteregions))
+  data.lmer.th$pasteregions <- as.numeric(as.character(data.lmer.th$pasteregions))
+
+# Fit model
+  p.lme.th <- array(data = NA, dim = nr)
+  for(r in 1:nr){
+    mf <- lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.th[data.lmer.th$rc == r,])
+    p.lme.th[r] <- anova(mf)[2,4]
+  }
+  
+# FDR correction
+  p.corr.th <- p.adjust(p.lme.th, method = "fdr")
+  kable(cbind(names(data.hyp[,47:56]), round(p.corr.th, 3)))
+  
+# Data with age and total volume
+  ac <- rep(data.all[,4], each = nt*nr)
+  vc.1 <- rep(data.all[,108], each = nt*nr)
+  vc.2 <- rep(data.all[,182], each = nt*nr)
+  vc <- vc.1
+  for(i in 1:length(vc.1)){
+    vc[i] <- ifelse(i%%2==1, vc.1[i], vc.2[i])
+  }
+  
+  data.lmer.th.cov <- data.frame(cbind(suc, tc, rc, gc, ac, vc, pasteregions))
+  data.lmer.th.cov$pasteregions <- as.numeric(as.character(data.lmer.th.cov$pasteregions))
+  data.lmer.th.cov$ac <- as.numeric(as.character(data.lmer.th.cov$ac))
+  data.lmer.th.cov$vc <- as.numeric(as.character(data.lmer.th.cov$vc))
+  
+# Fit model
+  p.lme.cov.th <- array(data = NA, dim = nr)
+  for(r in 1:nr){
+    mf <- lme(pasteregions ~ 1 + gc + ac + vc, random = ~ 1 | suc, data = data.lmer.th.cov[data.lmer.th.cov$rc == r,])
+    p.lme.cov.th[r] <- anova(mf)[2,4]
+  }
+  
+# FDR correction
+  p.cov.corr.th <- p.adjust(p.lme.cov.th, method = "fdr")
+  kable(cbind(names(data.hyp[,47:56]), round(p.cov.corr.th, 3)))
+```
+
+### Post-hoc tests
+```{r posthoc thick, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
+# create object to save results
+  pt.th <- array(data = NA, dim = c(length(p.corr.th),dim(allcomb)[2]))
+  pt.cov.th <- array(data = NA, dim = c(length(p.cov.corr.th),dim(allcomb)[2]))
+  pt.corr.th <- array(data=NA, dim=dim(pt.th))
+  pt.cov.corr.th <- array(data=NA, dim=dim(pt.cov.th))
+  
+# T-tests and correct results
+  for(r in 1:nr){
+    # general model
+    if (p.corr.th[r] > 0.05) {
+        pt.th[r,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.th[r,i] <- unlist(t.test(data.lmer.th[data.lmer.th$rc==r & data.lmer.th$gc==labels.g[allcomb[1,i]],5], data.lmer.th[data.lmer.th$rc==r & data.lmer.th$gc==labels.g[allcomb[2,i]],5])[3])
+      }
+      pt.corr.th[r,] <- p.adjust(pt.th[r,], method = "bonferroni")
+    }
+    # model with covariates
+    if (p.cov.corr.th[r] > 0.05) {
+        pt.cov.th[r,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.cov.th[r,i] <- unlist(t.test(data.lmer.cov.th[data.lmer.cov.th$rc==r & data.lmer.cov.th$gc==labels.g[allcomb[1,i]],7], data.lmer.cov.th[data.lmer.cov.th$rc==r & data.lmer.cov.th$gc==labels.g[allcomb[2,i]],7])[3])
+      }
+      pt.cov.corr.th[r,] <- p.adjust(pt.cov.th[r,], method = "bonferroni")
+    }
+  }
+```
+
+In the tables the results for the model with and without covariates are displayed.   
+
+```{r tables thick, echo = FALSE}
+# Model without covariates
+  kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.th,3))))
+
+# Model with age and total intracranial volume as covariates
+  kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.th,3))))
+```
+
+And surface area:  
+
+```{r repmes surfavg, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
+# Construct data
+  nt <- 2      # number of time points
+  nr <- 10     # number of regions
+  nsu <- dim(data.hyp)[1]
+  
+  suc <- rep(1:nsu, each = nt*nr)
+  tc <- rep(1:nt, nsu*nr)
+  rc <- rep(rep(1:nr, each = nt), nsu)
+  gc <- c(rep(c("CW", "CM"), each = (30*nt*nr)), rep(c("TM", "TW"), each = (40*nt*nr)))
+  
+  j <- 0       # counter for for-loop
+  pasteregions <- array(data=NA, dim = nt*nr*nsu)
+  for(i in 1:nsu){
+    for(r in 1:nr){
+      for(t in 1:nt){
+        j <- j + 1
+        pasteregions[j] <- data.hyp[i,(66+r+(nr*(t-1)))]
+      }
+    }
+  }
+  data.lmer.sa <- data.frame(cbind(suc, tc, rc, gc, pasteregions))
+  data.lmer.sa$pasteregions <- as.numeric(as.character(data.lmer.sa$pasteregions))
+
+# Fit model
+  p.lme.sa <- array(data = NA, dim = nr)
+  for(r in 1:nr){
+    mf <- lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.sa[data.lmer.sa$rc == r,])
+    p.lme.sa[r] <- anova(mf)[2,4]
+  }
+  
+# FDR correction
+  p.corr.sa <- p.adjust(p.lme.sa, method = "fdr")
+  kable(cbind(names(data.hyp[,67:86]), round(p.corr.sa, 3)))
+  
+# Data with age and total volume
+  ac <- rep(data.all[,4], each = nt*nr)
+  vc.1 <- rep(data.all[,108], each = nt*nr)
+  vc.2 <- rep(data.all[,182], each = nt*nr)
+  vc <- vc.1
+  for(i in 1:length(vc.1)){
+    vc[i] <- ifelse(i%%2==1, vc.1[i], vc.2[i])
+  }
+  
+  data.lmer.sa.cov <- data.frame(cbind(suc, tc, rc, gc, ac, vc, pasteregions))
+  data.lmer.sa.cov$pasteregions <- as.numeric(as.character(data.lmer.sa.cov$pasteregions))
+  data.lmer.sa.cov$ac <- as.numeric(as.character(data.lmer.sa.cov$ac))
+  data.lmer.sa.cov$vc <- as.numeric(as.character(data.lmer.sa.cov$vc))
+  
+# Fit model
+  p.lme.cov.sa <- array(data = NA, dim = nr)
+  for(r in 1:nr){
+    mf <- lme(pasteregions ~ 1 + gc + ac + vc, random = ~ 1 | suc, data = data.lmer.sa.cov[data.lmer.sa.cov$rc == r,])
+    p.lme.cov.sa[r] <- anova(mf)[2,4]
+  }
+  
+# FDR correction
+  p.cov.corr.sa <- p.adjust(p.lme.cov.sa, method = "fdr")
+  kable(cbind(names(data.hyp[,67:86]), round(p.cov.corr.sa, 3)))
+```
+
+### Post-hoc tests
+```{r posthoc surfavg, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
+# create object to save results
+  pt.sa <- array(data = NA, dim = c(length(p.corr.sa),dim(allcomb)[2]))
+  pt.cov.sa <- array(data = NA, dim = c(length(p.cov.corr.sa),dim(allcomb)[2]))
+  pt.corr.sa <- array(data=NA, dim=dim(pt.sa))
+  pt.cov.corr.sa <- array(data=NA, dim=dim(pt.cov.sa))
+  
+# T-tests and correct results
+  for(r in 1:nr){
+    # general model
+    if (p.corr.sa[r] > 0.05) {
+        pt.sa[r,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.sa[r,i] <- unlist(t.test(data.lmer.sa[data.lmer.sa$rc==r & data.lmer.sa$gc==labels.g[allcomb[1,i]],5], data.lmer.sa[data.lmer.sa$rc==r & data.lmer.sa$gc==labels.g[allcomb[2,i]],5])[3])
+      }
+      pt.corr.sa[r,] <- p.adjust(pt.sa[r,], method = "bonferroni")
+    }
+    # model with covariates
+    if (p.cov.corr.sa[r] > 0.05) {
+        pt.cov.sa[r,] <- rep(NA,dim(allcomb)[2])
+    }else{
+      for(i in 1:dim(allcomb)[2]){
+        pt.cov.sa[r,i] <- unlist(t.test(data.lmer.sa.cov[data.lmer.sa.cov$rc==r & data.lmer.sa.cov$gc==labels.g[allcomb[1,i]],7], data.lmer.sa.cov[data.lmer.sa.cov$rc==r & data.lmer.sa.cov$gc==labels.g[allcomb[2,i]],7])[3])
+      }
+      pt.cov.corr.sa[r,] <- p.adjust(pt.cov.sa[r,], method = "bonferroni")
+    }
+  }
+```
+
+In the tables the results for the model with and without covariates are displayed.   
+
+```{r tables surfavg, echo = FALSE}
+# Model without covariates
+  kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.sa,3))))
+
+# Model with age and total intracranial volume as covariates
+  kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.sa,3))))
+```
+
+<!-- In the end we can construct a table that shows the results of all three measures together   -->
+<!-- \newpage -->
+<!-- \blandscape -->
+
+<!-- ```{r general table} -->
+<!-- nameregions <- c("Groups", "Measure", "Fusiform L", "Fusiform R", "Inferiorparietal L", "Inferiorparietal R", "Postcentral L", "Postcentral R", "Precentral L", "Precentral R", "Frontal Pole L", "Frontal Pole R", "Cerebellum WM L", "Cerebellum WM R", "Cerebellum Cortex L", "Cerebellum Cortex R", "Thalamus L", "Thalamus R", "Caudate L", "Caudate R", "Putamen L", "Putamen R", "Accumbens L", "Accumbens R") -->
+<!-- c1.1 <- c(groupn[allcomb[1,1]], "V") -->
+<!-- c1.2 <- c(" vs ", "T") -->
+<!-- c1.3 <- c(groupn[allcomb[2,1]], "SA") -->
+<!-- c2.1 <- c(groupn[allcomb[1,2]], "V") -->
+<!-- c2.2 <- c(" vs ", "T") -->
+<!-- c2.3 <- c(groupn[allcomb[2,2]], "SA") -->
+<!-- c3.1 <- c(groupn[allcomb[1,3]], "V") -->
+<!-- c3.2 <- c(" vs ", "T") -->
+<!-- c3.3 <- c(groupn[allcomb[2,3]], "SA") -->
+<!-- c4.1 <- c(groupn[allcomb[1,4]], "V") -->
+<!-- c4.2 <- c(" vs ", "T") -->
+<!-- c4.3 <- c(groupn[allcomb[2,4]], "SA") -->
+<!-- c5.1 <- c(groupn[allcomb[1,5]], "V") -->
+<!-- c5.2 <- c(" vs ", "T") -->
+<!-- c5.3 <- c(groupn[allcomb[2,5]], "SA") -->
+<!-- c6.1 <- c(groupn[allcomb[1,6]], "V") -->
+<!-- c6.2 <- c(" vs ", "T") -->
+<!-- c6.3 <- c(groupn[allcomb[2,6]], "SA") -->
+<!-- kable(cbind(c1.1, c1.2, c1.3, c2.1, c2.2, c2.3, c3.1, c3.2, c3.3, c4.1, c4.2, c4.3, c5.1, c5.2, c5.3, c6.1, c6.2, c6.3)) -->
+<!-- ``` -->
+<!-- \elandscape -->
