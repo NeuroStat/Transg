@@ -1,7 +1,6 @@
 ---
 title: "ResultsSect"
 author: "Freya Acar"
-date: "4/11/2018"
 # header-includes:
 #   - \usepackage{pdflscape}
 #   - \newcommand{\blandscape}{\begin{landscape}}
@@ -32,9 +31,8 @@ Thirty CW (mean age = 25.80 years, SD = 3.84), 30 CM (mean age = 26.03 years, SD
 library(knitr)
 
 dig <- 2 # number of digits after comma
-vars <- c("Group", "Age", "SES", "Education", "Handedness")
-groupn <- c("CW", "CM", "TM", "TW")
-ager <- c(paste(round(mean(data.all[data.all[,2]==1,4]), digits = dig), " ± ", 
+groupn <- c("Group", "CW", "CM", "TM", "TW")
+ager <- c("Age", paste(round(mean(data.all[data.all[,2]==1,4]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==1,4]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==2,4]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==2,4]), digits = dig), sep=""),
@@ -42,7 +40,7 @@ ager <- c(paste(round(mean(data.all[data.all[,2]==1,4]), digits = dig), " ± ",
                 round(sd(data.all[data.all[,2]==3,4]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==4,4]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==4,4]), digits = dig), sep=""))
-SESr <- c(paste(round(mean(data.all[data.all[,2]==1,5]), digits = dig), " ± ", 
+SESr <- c("SES", paste(round(mean(data.all[data.all[,2]==1,5]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==1,5]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==2,5]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==2,5]), digits = dig), sep=""),
@@ -50,7 +48,7 @@ SESr <- c(paste(round(mean(data.all[data.all[,2]==1,5]), digits = dig), " ± ",
                 round(sd(data.all[data.all[,2]==3,5]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==4,5]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==4,5]), digits = dig), sep=""))
-Edr <- c(paste(round(mean(data.all[data.all[,2]==1,6]), digits = dig), " ± ", 
+Edr <- c("Education", paste(round(mean(data.all[data.all[,2]==1,6]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==1,6]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==2,6]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==2,6]), digits = dig), sep=""),
@@ -58,7 +56,7 @@ Edr <- c(paste(round(mean(data.all[data.all[,2]==1,6]), digits = dig), " ± ",
                 round(sd(data.all[data.all[,2]==3,6]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==4,6]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==4,6]), digits = dig), sep=""))
-Hdr <- c(paste(round(mean(data.all[data.all[,2]==1,7]), digits = dig), " ± ", 
+Hdr <- c("Handedness", paste(round(mean(data.all[data.all[,2]==1,7]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==1,7]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==2,7]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==2,7]), digits = dig), sep=""),
@@ -66,7 +64,7 @@ Hdr <- c(paste(round(mean(data.all[data.all[,2]==1,7]), digits = dig), " ± ",
                 round(sd(data.all[data.all[,2]==3,7]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==4,7]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==4,7]), digits = dig), sep=""))
-kable(cbind(vars, rbind(groupn, ager, SESr, Edr, Hdr)))
+kable(rbind(groupn, ager, SESr, Edr, Hdr), row.names = FALSE)
 ```
 
 ### Code for demographics
@@ -103,8 +101,7 @@ The code can be found in markdown version of this file, it is not printed on the
   anova(fit)
 ```
 
-Plot with ages
-```{r plot age, echo = FALSE}
+```{r plot age, echo = FALSE, fig.width=6, fig.height=4}
 hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white", 
      main = "Histogram of age distribution", breaks = length(unique(data.all[,4])))
 ```
@@ -113,7 +110,8 @@ hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white",
 ### Repeated measures
 Questions: do we want a correlation between regions of the same participant?  
 
-Everything for volume is computed here:  
+First we look at the results for volume. Alle code used to compute this can be found in the markdown version of this document, but is not printed in the pdf.  
+We fitted two mixed models. In the first model a random intercept for every subject was added, while in the second model age and total intracranial volume are added as covariates. An ANOVA is conducted on the results of the mixed models and an FDR-correction is applied over regions. For the regions where a statistically significant difference was found between the groups post-hoc paired t-tests were conducted that are bonferroni-corrected. The results for both models are very similar. The results for the model without covariates are displayed in the table below.  
 ```{r repmes volume, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
 # Libraries
   library(lme4)
@@ -179,7 +177,7 @@ Everything for volume is computed here:
   p.cov.corr <- p.adjust(p.lme.cov, method = "fdr")
   kable(cbind(names(data.hyp[,3:24]), round(p.cov.corr, 3)))
 ```
-### Post-hoc tests
+
 ```{r posthoc, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
 # create an object with all possible combinations
   allcomb <- combn(c(1:4),2)
@@ -219,14 +217,12 @@ Everything for volume is computed here:
   }
 ```
 
-In the tables the results for the model with and without covariates are displayed.   
-
 ```{r tables, echo = FALSE}
 # Model without covariates
   kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr,3))))
 
 # Model with age and total intracranial volume as covariates
-  kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr,3))))
+  # kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr,3))))
 ```
 
 Then we do the same computations for thickness:  
@@ -292,7 +288,6 @@ Then we do the same computations for thickness:
   kable(cbind(names(data.hyp[,47:56]), round(p.cov.corr.th, 3)))
 ```
 
-### Post-hoc tests
 ```{r posthoc thick, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
 # create object to save results
   pt.th <- array(data = NA, dim = c(length(p.corr.th),dim(allcomb)[2]))
@@ -323,14 +318,13 @@ Then we do the same computations for thickness:
   }
 ```
 
-In the tables the results for the model with and without covariates are displayed.   
 
 ```{r tables thick, echo = FALSE}
 # Model without covariates
   kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.th,3))))
 
 # Model with age and total intracranial volume as covariates
-  kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.th,3))))
+  # kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.th,3))))
 ```
 
 And surface area:  
@@ -396,7 +390,6 @@ And surface area:
   kable(cbind(names(data.hyp[,67:86]), round(p.cov.corr.sa, 3)))
 ```
 
-### Post-hoc tests
 ```{r posthoc surfavg, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
 # create object to save results
   pt.sa <- array(data = NA, dim = c(length(p.corr.sa),dim(allcomb)[2]))
@@ -427,14 +420,13 @@ And surface area:
   }
 ```
 
-In the tables the results for the model with and without covariates are displayed.   
 
 ```{r tables surfavg, echo = FALSE}
 # Model without covariates
   kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.sa,3))))
 
 # Model with age and total intracranial volume as covariates
-  kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.sa,3))))
+  # kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.sa,3))))
 ```
 
 <!-- In the end we can construct a table that shows the results of all three measures together   -->
