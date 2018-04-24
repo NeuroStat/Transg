@@ -421,7 +421,7 @@ And surface area:
 ```
 
 
-```{r tables surfavg, echo = FALSE}
+```{r tables surfavg, echo = FALSE, warning = FALSE}
 # Model without covariates
   kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.sa,3))))
 
