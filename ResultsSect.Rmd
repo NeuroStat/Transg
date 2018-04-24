@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(cache=TRUE)
 ```
 
-#
+# 
 
 ## Descriptives
 ### Participants
@@ -68,7 +68,7 @@ kable(rbind(groupn, ager, SESr, Edr, Hdr), row.names = FALSE)
 ```
 
 ### Code for demographics
-The code can be found in markdown version of this file, it is not printed on the PDF
+The code can be found in markdown version of this file, it is not printed in the PDF
 ```{r demogr, warning = FALSE, echo = FALSE, results='hide'}
 # Groups
   ng1 <- sum(data.all[,2]==1)
@@ -108,10 +108,12 @@ hist(data.all[,4], xlab = "Age", col = "seagreen3", border = "white",
 
 ## Results
 ### Repeated measures
-Questions: do we want a correlation between regions of the same participant?  
+Questions: do we want (to account for) a correlation between regions of the same participant?  
 
 First we look at the results for volume. Alle code used to compute this can be found in the markdown version of this document, but is not printed in the pdf.  
-We fitted two mixed models. In the first model a random intercept for every subject was added, while in the second model age and total intracranial volume are added as covariates. An ANOVA is conducted on the results of the mixed models and an FDR-correction is applied over regions. For the regions where a statistically significant difference was found between the groups post-hoc paired t-tests were conducted that are bonferroni-corrected. The results for both models are very similar. The results for the model without covariates are displayed in the table below.  
+We fitted two mixed models. In both models a random intercept for every subject was added, in the second model age and total intracranial volume are added as covariates. An ANOVA is conducted on the results of the mixed models and an FDR-correction is applied over regions. For the regions where a statistically significant difference was found between the groups post-hoc paired comparisons were conducted that are bonferroni-corrected. The results for both models are very similar. The results for the model without covariates are displayed in the table below. If no statistically significant difference is found for a regions "NA" is printed for that region.  
+
+
 ```{r repmes volume, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
 # Libraries
   library(lme4)
@@ -194,14 +196,14 @@ We fitted two mixed models. In the first model a random intercept for every subj
   pt.corr <- array(data=NA, dim=dim(pt))
   pt.cov.corr <- array(data=NA, dim=dim(pt.cov))
   
-# T-tests and correct results
+# Pair-wise comparisons and correct results
   for(r in 1:nr){
     # general model
     if (p.corr[r] > 0.05) {
         pt[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt[r,i] <- unlist(t.test(data.lmer[data.lmer$rc==r & data.lmer$gc==labels.g[allcomb[1,i]],5], data.lmer[data.lmer$rc==r & data.lmer$gc==labels.g[allcomb[2,i]],5])[3])
+        pt[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer[data.lmer$rc == r & (data.lmer$gc == labels.g[allcomb[1,i]] | data.lmer$gc == labels.g[allcomb[2,i]]),]))[20])[8]
       }
       pt.corr[r,] <- p.adjust(pt[r,], method = "bonferroni")
     }
@@ -210,7 +212,7 @@ We fitted two mixed models. In the first model a random intercept for every subj
         pt.cov[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.cov[r,i] <- unlist(t.test(data.lmer.cov[data.lmer.cov$rc==r & data.lmer.cov$gc==labels.g[allcomb[1,i]],7], data.lmer.cov[data.lmer.cov$rc==r & data.lmer.cov$gc==labels.g[allcomb[2,i]],7])[3])
+        pt.cov[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.cov[data.lmer.cov$rc == r & (data.lmer.cov$gc == labels.g[allcomb[1,i]] | data.lmer.cov$gc == labels.g[allcomb[2,i]]),]))[20])[8]
       }
       pt.cov.corr[r,] <- p.adjust(pt.cov[r,], method = "bonferroni")
     }
@@ -219,6 +221,7 @@ We fitted two mixed models. In the first model a random intercept for every subj
 
 ```{r tables, echo = FALSE}
 # Model without covariates
+  kable(cbind(substring(names(data.hyp[,3:24]), 4), round(p.corr, 3)))
   kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr,3))))
 
 # Model with age and total intracranial volume as covariates
@@ -295,14 +298,14 @@ Then we do the same computations for thickness:
   pt.corr.th <- array(data=NA, dim=dim(pt.th))
   pt.cov.corr.th <- array(data=NA, dim=dim(pt.cov.th))
   
-# T-tests and correct results
+# Pair-wise comparisons and correct results
   for(r in 1:nr){
     # general model
     if (p.corr.th[r] > 0.05) {
         pt.th[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.th[r,i] <- unlist(t.test(data.lmer.th[data.lmer.th$rc==r & data.lmer.th$gc==labels.g[allcomb[1,i]],5], data.lmer.th[data.lmer.th$rc==r & data.lmer.th$gc==labels.g[allcomb[2,i]],5])[3])
+        pt.th[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.th[data.lmer.th$rc == r & (data.lmer.th$gc == labels.g[allcomb[1,i]] | data.lmer.th$gc == labels.g[allcomb[2,i]]),]))[20])[8]
       }
       pt.corr.th[r,] <- p.adjust(pt.th[r,], method = "bonferroni")
     }
@@ -311,7 +314,7 @@ Then we do the same computations for thickness:
         pt.cov.th[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.cov.th[r,i] <- unlist(t.test(data.lmer.cov.th[data.lmer.cov.th$rc==r & data.lmer.cov.th$gc==labels.g[allcomb[1,i]],7], data.lmer.cov.th[data.lmer.cov.th$rc==r & data.lmer.cov.th$gc==labels.g[allcomb[2,i]],7])[3])
+        pt.cov.th[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.th.cov[data.lmer.th.cov$rc == r & (data.lmer.th.cov$gc == labels.g[allcomb[1,i]] | data.lmer.th.cov$gc == labels.g[allcomb[2,i]]),]))[20])[8]
       }
       pt.cov.corr.th[r,] <- p.adjust(pt.cov.th[r,], method = "bonferroni")
     }
@@ -321,6 +324,7 @@ Then we do the same computations for thickness:
 
 ```{r tables thick, echo = FALSE}
 # Model without covariates
+  kable(cbind(substring(names(data.hyp[,47:56]), 4), round(p.corr.th, 3)))
   kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.th,3))))
 
 # Model with age and total intracranial volume as covariates
@@ -397,14 +401,14 @@ And surface area:
   pt.corr.sa <- array(data=NA, dim=dim(pt.sa))
   pt.cov.corr.sa <- array(data=NA, dim=dim(pt.cov.sa))
   
-# T-tests and correct results
+# Pair-wise comparisons and correct results
   for(r in 1:nr){
     # general model
     if (p.corr.sa[r] > 0.05) {
         pt.sa[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.sa[r,i] <- unlist(t.test(data.lmer.sa[data.lmer.sa$rc==r & data.lmer.sa$gc==labels.g[allcomb[1,i]],5], data.lmer.sa[data.lmer.sa$rc==r & data.lmer.sa$gc==labels.g[allcomb[2,i]],5])[3])
+        pt.sa[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.sa[data.lmer.sa$rc == r & (data.lmer.sa$gc == labels.g[allcomb[1,i]] | data.lmer.sa$gc == labels.g[allcomb[2,i]]),]))[20])[8]
       }
       pt.corr.sa[r,] <- p.adjust(pt.sa[r,], method = "bonferroni")
     }
@@ -413,7 +417,7 @@ And surface area:
         pt.cov.sa[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.cov.sa[r,i] <- unlist(t.test(data.lmer.sa.cov[data.lmer.sa.cov$rc==r & data.lmer.sa.cov$gc==labels.g[allcomb[1,i]],7], data.lmer.sa.cov[data.lmer.sa.cov$rc==r & data.lmer.sa.cov$gc==labels.g[allcomb[2,i]],7])[3])
+        pt.cov.sa[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.sa.cov[data.lmer.sa.cov$rc == r & (data.lmer.sa.cov$gc == labels.g[allcomb[1,i]] | data.lmer.sa.cov$gc == labels.g[allcomb[2,i]]),]))[20])[8]
       }
       pt.cov.corr.sa[r,] <- p.adjust(pt.cov.sa[r,], method = "bonferroni")
     }
@@ -423,36 +427,210 @@ And surface area:
 
 ```{r tables surfavg, echo = FALSE, warning = FALSE}
 # Model without covariates
+  kable(cbind(substring(names(data.hyp[,67:(67+nr-1)]), 4), round(p.corr.sa, 3)))
   kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.sa,3))))
 
 # Model with age and total intracranial volume as covariates
   # kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.sa,3))))
 ```
 
-<!-- In the end we can construct a table that shows the results of all three measures together   -->
-<!-- \newpage -->
-<!-- \blandscape -->
+\newpage
 
-<!-- ```{r general table} -->
-<!-- nameregions <- c("Groups", "Measure", "Fusiform L", "Fusiform R", "Inferiorparietal L", "Inferiorparietal R", "Postcentral L", "Postcentral R", "Precentral L", "Precentral R", "Frontal Pole L", "Frontal Pole R", "Cerebellum WM L", "Cerebellum WM R", "Cerebellum Cortex L", "Cerebellum Cortex R", "Thalamus L", "Thalamus R", "Caudate L", "Caudate R", "Putamen L", "Putamen R", "Accumbens L", "Accumbens R") -->
-<!-- c1.1 <- c(groupn[allcomb[1,1]], "V") -->
-<!-- c1.2 <- c(" vs ", "T") -->
-<!-- c1.3 <- c(groupn[allcomb[2,1]], "SA") -->
-<!-- c2.1 <- c(groupn[allcomb[1,2]], "V") -->
-<!-- c2.2 <- c(" vs ", "T") -->
-<!-- c2.3 <- c(groupn[allcomb[2,2]], "SA") -->
-<!-- c3.1 <- c(groupn[allcomb[1,3]], "V") -->
-<!-- c3.2 <- c(" vs ", "T") -->
-<!-- c3.3 <- c(groupn[allcomb[2,3]], "SA") -->
-<!-- c4.1 <- c(groupn[allcomb[1,4]], "V") -->
-<!-- c4.2 <- c(" vs ", "T") -->
-<!-- c4.3 <- c(groupn[allcomb[2,4]], "SA") -->
-<!-- c5.1 <- c(groupn[allcomb[1,5]], "V") -->
-<!-- c5.2 <- c(" vs ", "T") -->
-<!-- c5.3 <- c(groupn[allcomb[2,5]], "SA") -->
-<!-- c6.1 <- c(groupn[allcomb[1,6]], "V") -->
-<!-- c6.2 <- c(" vs ", "T") -->
-<!-- c6.3 <- c(groupn[allcomb[2,6]], "SA") -->
-<!-- kable(cbind(c1.1, c1.2, c1.3, c2.1, c2.2, c2.3, c3.1, c3.2, c3.3, c4.1, c4.2, c4.3, c5.1, c5.2, c5.3, c6.1, c6.2, c6.3)) -->
-<!-- ``` -->
-<!-- \elandscape -->
+### Compare to results from 1 timepoint
+```{r T1, echo = FALSE, warning = FALSE, include = FALSE}
+# Volume
+  # Dataset
+    T1.vol <- data.hyp[,3:24]
+
+  # FDR
+    nr <- 22
+    p.T1.vol <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T1.vol[r] <- unlist(anova(lm(T1.vol[,r] ~ as.factor(data.hyp[,2]))))[9]
+    }
+    p.T1.vol.corr <- p.adjust(p.T1.vol, method = "fdr")
+    
+  # Bonferroni
+    pt.T1.vol <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    pt.T1.vol.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    for(r in 1:nr){
+      # general model
+      if (p.T1.vol.corr[r] > 0.05) {
+          pt.T1.vol[r,] <- rep(NA,dim(allcomb)[2])
+      }else{
+        for(i in 1:dim(allcomb)[2]){
+          pt.T1.vol[r,i] <- unlist(t.test(T1.vol[data.hyp[,2]==allcomb[1,i],r], T1.vol[data.hyp[,2]==allcomb[2,i],r])[3])
+        }
+        pt.T1.vol.corr[r,] <- p.adjust(pt.T1.vol[r,], method = "bonferroni")
+      }
+    }
+
+    
+# Thickness
+  # Dataset
+    T1.th <- data.hyp[,47:56]
+
+  # FDR
+    nr <- 10
+    p.T1.th <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T1.th[r] <- unlist(anova(lm(T1.th[,r] ~ as.factor(data.hyp[,2]))))[9]
+    }
+    p.T1.th.corr <- p.adjust(p.T1.th, method = "fdr")
+    
+  # Bonferroni
+    pt.T1.th <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    pt.T1.th.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    for(r in 1:nr){
+      # general model
+      if (p.T1.th.corr[r] > 0.05) {
+          pt.T1.th[r,] <- rep(NA,dim(allcomb)[2])
+      }else{
+        for(i in 1:dim(allcomb)[2]){
+          pt.T1.th[r,i] <- unlist(t.test(T1.th[data.hyp[,2]==allcomb[1,i],r], T1.th[data.hyp[,2]==allcomb[2,i],r])[3])
+        }
+        pt.T1.th.corr[r,] <- p.adjust(pt.T1.th[r,], method = "bonferroni")
+      }
+    }
+
+    
+# Surface Area
+  # Dataset
+    T1.sa <- data.hyp[,67:76]
+
+  # FDR
+    nr <- 10
+    p.T1.sa <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T1.sa[r] <- unlist(anova(lm(T1.sa[,r] ~ as.factor(data.hyp[,2]))))[9]
+    }
+    p.T1.sa.corr <- p.adjust(p.T1.sa, method = "fdr")
+    
+  # Bonferroni
+    pt.T1.sa <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    pt.T1.sa.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    for(r in 1:nr){
+      # general model
+      if (p.T1.sa.corr[r] > 0.05) {
+          pt.T1.sa[r,] <- rep(NA,dim(allcomb)[2])
+      }else{
+        for(i in 1:dim(allcomb)[2]){
+          pt.T1.sa[r,i] <- unlist(t.test(T1.sa[data.hyp[,2]==allcomb[1,i],r], T1.sa[data.hyp[,2]==allcomb[2,i],r])[3])
+        }
+        pt.T1.sa.corr[r,] <- p.adjust(pt.T1.sa[r,], method = "bonferroni")
+      }
+    }
+
+```
+
+```{r T2, echo = FALSE, warning = FALSE, include = FALSE}
+# Volume
+  # Dataset
+    T2.vol <- data.hyp[,25:46]
+
+  # FDR
+    nr <- 22
+    p.T2.vol <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T2.vol[r] <- unlist(anova(lm(T2.vol[,r] ~ as.factor(data.hyp[,2]))))[9]
+    }
+    p.T2.vol.corr <- p.adjust(p.T2.vol, method = "fdr")
+    
+  # Bonferroni
+    pt.T2.vol <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    pt.T2.vol.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    for(r in 1:nr){
+      # general model
+      if (p.T2.vol.corr[r] > 0.05) {
+          pt.T2.vol[r,] <- rep(NA,dim(allcomb)[2])
+      }else{
+        for(i in 1:dim(allcomb)[2]){
+          pt.T2.vol[r,i] <- unlist(t.test(T2.vol[data.hyp[,2]==allcomb[1,i],r], T2.vol[data.hyp[,2]==allcomb[2,i],r])[3])
+        }
+        pt.T2.vol.corr[r,] <- p.adjust(pt.T2.vol[r,], method = "bonferroni")
+      }
+    }
+
+    
+# Thickness
+  # Dataset
+    T2.th <- data.hyp[,57:66]
+
+  # FDR
+    nr <- 10
+    p.T2.th <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T2.th[r] <- unlist(anova(lm(T2.th[,r] ~ as.factor(data.hyp[,2]))))[9]
+    }
+    p.T2.th.corr <- p.adjust(p.T2.th, method = "fdr")
+    
+  # Bonferroni
+    pt.T2.th <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    pt.T2.th.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    for(r in 1:nr){
+      # general model
+      if (p.T2.th.corr[r] > 0.05) {
+          pt.T2.th[r,] <- rep(NA,dim(allcomb)[2])
+      }else{
+        for(i in 1:dim(allcomb)[2]){
+          pt.T2.th[r,i] <- unlist(t.test(T2.th[data.hyp[,2]==allcomb[1,i],r], T2.th[data.hyp[,2]==allcomb[2,i],r])[3])
+        }
+        pt.T2.th.corr[r,] <- p.adjust(pt.T2.th[r,], method = "bonferroni")
+      }
+    }
+
+    
+# Surface Area
+  # Dataset
+    T2.sa <- data.hyp[,77:86]
+
+  # FDR
+    nr <- 10
+    p.T2.sa <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T2.sa[r] <- unlist(anova(lm(T2.sa[,r] ~ as.factor(data.hyp[,2]))))[9]
+    }
+    p.T2.sa.corr <- p.adjust(p.T2.sa, method = "fdr")
+    
+  # Bonferroni
+    pt.T2.sa <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    pt.T2.sa.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    for(r in 1:nr){
+      # general model
+      if (p.T2.sa.corr[r] > 0.05) {
+          pt.T2.sa[r,] <- rep(NA,dim(allcomb)[2])
+      }else{
+        for(i in 1:dim(allcomb)[2]){
+          pt.T2.sa[r,i] <- unlist(t.test(T2.sa[data.hyp[,2]==allcomb[1,i],r], T2.sa[data.hyp[,2]==allcomb[2,i],r])[3])
+        }
+        pt.T2.sa.corr[r,] <- p.adjust(pt.T2.sa[r,], method = "bonferroni")
+      }
+    }
+```
+
+### Volume
+Text  
+```{r compare V, echo = FALSE, warning = FALSE}
+# Volume
+  kable(caption = "Comparison volume", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,3:24]), 4), round(p.T1.vol.corr, 3), round(p.T2.vol.corr, 3), round(p.corr, 3))))
+  kable(caption = "Volume: T1", cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.vol.corr,3))))
+  kable(caption = "Volume: T2", cbind(c(" ",substring(names(data.hyp[,25:46]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T2.vol.corr,3))))
+```
+
+### Thickness
+Text  
+```{r compare T, echo = FALSE, warning = FALSE}
+# Thickness
+  kable(caption = "Comparison thickness", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,47:56]), 4), round(p.T1.th.corr, 3), round(p.T2.th.corr, 3), round(p.corr.th, 3))))
+  kable(caption = "Thickness: T1", cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.th.corr,3))))
+  kable(caption = "Thickness: T2", cbind(c(" ",substring(names(data.hyp[,57:66]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.th.corr,3))))
+```
+
+### Surface Area
+Text  
+```{r compare SA, echo = FALSE, warning = FALSE}
+# Surface area
+  kable(caption = "Comparison surface area", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,67:76]), 4), round(p.T1.sa.corr, 3), round(p.T2.sa.corr, 3), round(p.corr.sa, 3))))
+  kable(caption = "Surface area: T1", cbind(c(" ",substring(names(data.hyp[,67:76]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.sa.corr,3))))
+  kable(caption = "Surface area: T2", cbind(c(" ",substring(names(data.hyp[,77:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.sa.corr,3))))
+```
