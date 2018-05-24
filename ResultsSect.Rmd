@@ -13,8 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(cache=TRUE)
 ```
 
-# 
-
 ## Descriptives
 ### Participants
 Thirty CW (mean age = 25.80 years, SD = 3.84), 30 CM (mean age = 26.03 years, SD = 5.26), 40 TM (mean age = 24.38 years, SD = 5.35), and 41 TW (mean age = 24.88 years, SD = 6.20) participated in the study. One TW participant was excluded because no results could be extracted from FreeSurfer. Demographics can be observed in Table 1. The sample did not differ significantly in age [F(3, 136) = 0.74, p = 0.528].
@@ -64,7 +62,7 @@ Hdr <- c("Handedness", paste(round(mean(data.all[data.all[,2]==1,7]), digits = d
                 round(sd(data.all[data.all[,2]==3,7]), digits = dig), sep=""),
           paste(round(mean(data.all[data.all[,2]==4,7]), digits = dig), " ± ", 
                 round(sd(data.all[data.all[,2]==4,7]), digits = dig), sep=""))
-kable(rbind(groupn, ager, SESr, Edr, Hdr), row.names = FALSE)
+kable(rbind(groupn, ager, SESr, Edr, Hdr), row.names = FALSE, caption = "Demographics")
 ```
 
 ### Code for demographics
@@ -124,7 +122,7 @@ If no statistically significant difference is found for a regions "NA" is printe
 # Construct data
   nt <- 2      # number of time points
   nr <- 22     # number of regions
-  nsu <- dim(data.hyp)[1]
+  nsu <- dim(data.hyp)[1] # number of subjects
   
   suc <- rep(1:nsu, each = nt*nr)
   tc <- rep(1:nt, nsu*nr)
@@ -147,13 +145,12 @@ If no statistically significant difference is found for a regions "NA" is printe
 # Fit model
   p.lme <- array(data = NA, dim = nr)
   for(r in 1:nr){
-    mf <- lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer[data.lmer$rc == r,])
+    mf <- lme(pasteregions ~ 1 + as.factor(gc), random = ~ 1 | suc, data = data.lmer[data.lmer$rc == r,])
     p.lme[r] <- anova(mf)[2,4]
   }
   
 # FDR correction
   p.corr <- p.adjust(p.lme, method = "fdr")
-  kable(cbind(names(data.hyp[,3:24]), round(p.corr, 3)))
   
 # Data with age and total volume
   ac <- rep(data.all[,4], each = nt*nr)
@@ -172,13 +169,12 @@ If no statistically significant difference is found for a regions "NA" is printe
 # Fit model
   p.lme.cov <- array(data = NA, dim = nr)
   for(r in 1:nr){
-    mf <- lme(pasteregions ~ 1 + gc + ac + vc, random = ~ 1 | suc, data = data.lmer.cov[data.lmer.cov$rc == r,])
+    mf <- lme(pasteregions ~ 1 + as.factor(gc) + ac + vc, random = ~ 1 | suc, data = data.lmer.cov[data.lmer.cov$rc == r,])
     p.lme.cov[r] <- anova(mf)[2,4]
   }
   
 # FDR correction
   p.cov.corr <- p.adjust(p.lme.cov, method = "fdr")
-  kable(cbind(names(data.hyp[,3:24]), round(p.cov.corr, 3)))
 ```
 
 ```{r posthoc, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
@@ -204,7 +200,7 @@ If no statistically significant difference is found for a regions "NA" is printe
         pt[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer[data.lmer$rc == r & (data.lmer$gc == labels.g[allcomb[1,i]] | data.lmer$gc == labels.g[allcomb[2,i]]),]))[20])[10]
+        pt[r,i] <- unlist(summary(lme(pasteregions ~ 1 + as.factor(gc), random = ~ 1 | suc, data = data.lmer[data.lmer$rc == r & (data.lmer$gc == labels.g[allcomb[1,i]] | data.lmer$gc == labels.g[allcomb[2,i]]),]))[20])[10]
       }
       pt.corr[r,] <- p.adjust(pt[r,], method = "bonferroni")
     }
@@ -213,7 +209,7 @@ If no statistically significant difference is found for a regions "NA" is printe
         pt.cov[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.cov[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.cov[data.lmer.cov$rc == r & (data.lmer.cov$gc == labels.g[allcomb[1,i]] | data.lmer.cov$gc == labels.g[allcomb[2,i]]),]))[20])[10]
+        pt.cov[r,i] <- summary(lme(pasteregions ~ 1 + as.factor(gc) + ac + vc, random = ~ 1 | suc, data = data.lmer.cov[data.lmer.cov$rc == r & (data.lmer.cov$gc == labels.g[allcomb[1,i]] | data.lmer.cov$gc == labels.g[allcomb[2,i]]),]))$tTable[2,5]
       }
       pt.cov.corr[r,] <- p.adjust(pt.cov[r,], method = "bonferroni")
     }
@@ -222,15 +218,12 @@ If no statistically significant difference is found for a regions "NA" is printe
 
 ```{r tables, echo = FALSE}
 # Model without covariates
-  kable(rbind(c("region", "No cov", "With cov"), cbind(substring(names(data.hyp[,3:24]), 4), round(p.corr, 3), round(p.cov.corr, 3))))
+  kable(rbind(c("region", "No cov", "With cov"), cbind(substring(names(data.hyp[,3:24]), 4), round(p.corr, 3), round(p.cov.corr, 3))), caption = "ANOVA for volume with FDR correction for model with and without covariates")
   kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr,3))), caption = "Group-wise comparison for volume in model with no covariates")
   kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr,3))), caption = "Group-wise comparison for volume in model with covariates")
-
-# Model with age and total intracranial volume as covariates
-  # kable(cbind(c(" ",substring(names(data.hyp[,3:24]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr,3))))
 ```
 
-Then we do the same computations for thickness:  
+Then we do the same computations for thickness. However, for thickness we leave out intracranial volume as a covariate (cf. e-mail Meredith Braskie).   
 
 ```{r repmes thickn, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
 # Construct data
@@ -259,38 +252,29 @@ Then we do the same computations for thickness:
 # Fit model
   p.lme.th <- array(data = NA, dim = nr)
   for(r in 1:nr){
-    mf <- lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.th[data.lmer.th$rc == r,])
+    mf <- lme(pasteregions ~ 1 + as.factor(gc), random = ~ 1 | suc, data = data.lmer.th[data.lmer.th$rc == r,])
     p.lme.th[r] <- anova(mf)[2,4]
   }
   
 # FDR correction
   p.corr.th <- p.adjust(p.lme.th, method = "fdr")
-  kable(cbind(names(data.hyp[,47:56]), round(p.corr.th, 3)))
   
 # Data with age and total volume
   ac <- rep(data.all[,4], each = nt*nr)
-  vc.1 <- rep(data.all[,108], each = nt*nr)
-  vc.2 <- rep(data.all[,182], each = nt*nr)
-  vc <- vc.1
-  for(i in 1:length(vc.1)){
-    vc[i] <- ifelse(i%%2==1, vc.1[i], vc.2[i])
-  }
-  
-  data.lmer.th.cov <- data.frame(cbind(suc, tc, rc, gc, ac, vc, pasteregions))
+
+  data.lmer.th.cov <- data.frame(cbind(suc, tc, rc, gc, ac, pasteregions))
   data.lmer.th.cov$pasteregions <- as.numeric(as.character(data.lmer.th.cov$pasteregions))
   data.lmer.th.cov$ac <- as.numeric(as.character(data.lmer.th.cov$ac))
-  data.lmer.th.cov$vc <- as.numeric(as.character(data.lmer.th.cov$vc))
   
 # Fit model
   p.lme.cov.th <- array(data = NA, dim = nr)
   for(r in 1:nr){
-    mf <- lme(pasteregions ~ 1 + gc + ac + vc, random = ~ 1 | suc, data = data.lmer.th.cov[data.lmer.th.cov$rc == r,])
+    mf <- lme(pasteregions ~ 1 + as.factor(gc) + ac, random = ~ 1 | suc, data = data.lmer.th.cov[data.lmer.th.cov$rc == r,])
     p.lme.cov.th[r] <- anova(mf)[2,4]
   }
   
 # FDR correction
   p.cov.corr.th <- p.adjust(p.lme.cov.th, method = "fdr")
-  kable(cbind(names(data.hyp[,47:56]), round(p.cov.corr.th, 3)))
 ```
 
 ```{r posthoc thick, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
@@ -307,7 +291,7 @@ Then we do the same computations for thickness:
         pt.th[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.th[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.th[data.lmer.th$rc == r & (data.lmer.th$gc == labels.g[allcomb[1,i]] | data.lmer.th$gc == labels.g[allcomb[2,i]]),]))[20])[10]
+        pt.th[r,i] <- unlist(summary(lme(pasteregions ~ 1 + as.factor(gc), random = ~ 1 | suc, data = data.lmer.th[data.lmer.th$rc == r & (data.lmer.th$gc == labels.g[allcomb[1,i]] | data.lmer.th$gc == labels.g[allcomb[2,i]]),]))[20])[10]
       }
       pt.corr.th[r,] <- p.adjust(pt.th[r,], method = "bonferroni")
     }
@@ -316,7 +300,7 @@ Then we do the same computations for thickness:
         pt.cov.th[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.cov.th[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.th.cov[data.lmer.th.cov$rc == r & (data.lmer.th.cov$gc == labels.g[allcomb[1,i]] | data.lmer.th.cov$gc == labels.g[allcomb[2,i]]),]))[20])[10]
+        pt.cov.th[r,i] <- summary(lme(pasteregions ~ 1 + as.factor(gc) + ac, random = ~ 1 | suc, data = data.lmer.th.cov[data.lmer.th.cov$rc == r & (data.lmer.th.cov$gc == labels.g[allcomb[1,i]] | data.lmer.th.cov$gc == labels.g[allcomb[2,i]]),]))$tTable[2,5]
       }
       pt.cov.corr.th[r,] <- p.adjust(pt.cov.th[r,], method = "bonferroni")
     }
@@ -326,12 +310,9 @@ Then we do the same computations for thickness:
 
 ```{r tables thick, echo = FALSE}
 # Model without covariates
-  kable(rbind(c("region", "No cov", "With cov"), cbind(substring(names(data.hyp[,47:56]), 4), round(p.corr.th, 3), round(p.cov.corr.th, 3))))
+  kable(rbind(c("region", "No cov", "With cov"), cbind(substring(names(data.hyp[,47:56]), 4), round(p.corr.th, 3), round(p.cov.corr.th, 3))), caption = "ANOVA for thickness with FDR correction for model with and without covariates")
   kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.th,3))), caption = "Group-wise comparison for thickness in model with no covariates")
     kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.th,3))), caption = "Group-wise comparison for thickness in model with covariates")
-
-# Model with age and total intracranial volume as covariates
-  # kable(cbind(c(" ",substring(names(data.hyp[,47:56]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.th,3))))
 ```
 
 And surface area:  
@@ -363,13 +344,12 @@ And surface area:
 # Fit model
   p.lme.sa <- array(data = NA, dim = nr)
   for(r in 1:nr){
-    mf <- lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.sa[data.lmer.sa$rc == r,])
+    mf <- lme(pasteregions ~ 1 + as.factor(gc), random = ~ 1 | suc, data = data.lmer.sa[data.lmer.sa$rc == r,])
     p.lme.sa[r] <- anova(mf)[2,4]
   }
   
 # FDR correction
   p.corr.sa <- p.adjust(p.lme.sa, method = "fdr")
-  kable(cbind(names(data.hyp[,67:86]), round(p.corr.sa, 3)))
   
 # Data with age and total volume
   ac <- rep(data.all[,4], each = nt*nr)
@@ -388,13 +368,12 @@ And surface area:
 # Fit model
   p.lme.cov.sa <- array(data = NA, dim = nr)
   for(r in 1:nr){
-    mf <- lme(pasteregions ~ 1 + gc + ac + vc, random = ~ 1 | suc, data = data.lmer.sa.cov[data.lmer.sa.cov$rc == r,])
+    mf <- lme(pasteregions ~ 1 + as.factor(gc) + ac + vc, random = ~ 1 | suc, data = data.lmer.sa.cov[data.lmer.sa.cov$rc == r,])
     p.lme.cov.sa[r] <- anova(mf)[2,4]
   }
   
 # FDR correction
   p.cov.corr.sa <- p.adjust(p.lme.cov.sa, method = "fdr")
-  kable(cbind(names(data.hyp[,67:86]), round(p.cov.corr.sa, 3)))
 ```
 
 ```{r posthoc surfavg, warning = FALSE, include = FALSE, echo = FALSE, results='hide'}
@@ -411,7 +390,7 @@ And surface area:
         pt.sa[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.sa[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.sa[data.lmer.sa$rc == r & (data.lmer.sa$gc == labels.g[allcomb[1,i]] | data.lmer.sa$gc == labels.g[allcomb[2,i]]),]))[20])[10]
+        pt.sa[r,i] <- unlist(summary(lme(pasteregions ~ 1 + as.factor(gc), random = ~ 1 | suc, data = data.lmer.sa[data.lmer.sa$rc == r & (data.lmer.sa$gc == labels.g[allcomb[1,i]] | data.lmer.sa$gc == labels.g[allcomb[2,i]]),]))[20])[10]
       }
       pt.corr.sa[r,] <- p.adjust(pt.sa[r,], method = "bonferroni")
     }
@@ -420,7 +399,7 @@ And surface area:
         pt.cov.sa[r,] <- rep(NA,dim(allcomb)[2])
     }else{
       for(i in 1:dim(allcomb)[2]){
-        pt.cov.sa[r,i] <- unlist(summary(lme(pasteregions ~ 1 + gc, random = ~ 1 | suc, data = data.lmer.sa.cov[data.lmer.sa.cov$rc == r & (data.lmer.sa.cov$gc == labels.g[allcomb[1,i]] | data.lmer.sa.cov$gc == labels.g[allcomb[2,i]]),]))[20])[10]
+        pt.cov.sa[r,i] <- summary(lme(pasteregions ~ 1 + as.factor(gc) + ac + vc, random = ~ 1 | suc, data = data.lmer.sa.cov[data.lmer.sa.cov$rc == r & (data.lmer.sa.cov$gc == labels.g[allcomb[1,i]] | data.lmer.sa.cov$gc == labels.g[allcomb[2,i]]),]))$tTable[2,5]
       }
       pt.cov.corr.sa[r,] <- p.adjust(pt.cov.sa[r,], method = "bonferroni")
     }
@@ -430,17 +409,15 @@ And surface area:
 
 ```{r tables surfavg, echo = FALSE, warning = FALSE}
 # Model without covariates
-  kable(rbind(c("region", "No cov", "With cov"), cbind(substring(names(data.hyp[,67:(67+nr-1)]), 4), round(p.corr.sa, 3), round(p.cov.corr.sa, 3))))
+  kable(rbind(c("region", "No cov", "With cov"), cbind(substring(names(data.hyp[,67:(67+nr-1)]), 4), round(p.corr.sa, 3), round(p.cov.corr.sa, 3))), caption = "ANOVA for surface area with FDR correction for model with and without covariates")
   kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.corr.sa,3))), caption = "Group-wise comparison for surface area in model with no covariates")
     kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.sa,3))), caption = "Group-wise comparison for surface area in model with covariates")
-
-# Model with age and total intracranial volume as covariates
-  # kable(cbind(c(" ",substring(names(data.hyp[,67:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.cov.corr.sa,3))))
 ```
 
 \newpage
 
-### Compare to results from 1 timepoint
+### Compare to results from 1 timepoint  
+In this section we explore what the results would have been if we would have been limited to one scan for the analysis. Tables 11, 14 and 17 show the p-values resulting from the anova's conducted on T1, T2 and both respectively. You can observe the (slight) increase in power here.  
 ```{r T1, echo = FALSE, warning = FALSE, include = FALSE}
 # Volume
   # Dataset
@@ -633,5 +610,5 @@ And surface area:
 # Surface area
   kable(caption = "Comparison surface area", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,67:76]), 4), round(p.T1.sa.corr, 3), round(p.T2.sa.corr, 3), round(p.corr.sa, 3))))
   kable(caption = "Surface area: T1", cbind(c(" ",substring(names(data.hyp[,67:76]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.sa.corr,3))))
-  kable(caption = "Surface area: T2", cbind(c(" ",substring(names(data.hyp[,77:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.sa.corr,3))))
+  kable(caption = "Surface area: T2", cbind(c(" ",substring(names(data.hyp[,77:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T2.sa.corr,3))))
 ```
