@@ -2,10 +2,9 @@
 title: "ResultsSect"
 author: "Freya Acar"
 # header-includes:
-#   - \usepackage{pdflscape}
-#   - \newcommand{\blandscape}{\begin{landscape}}
-#   - \newcommand{\elandscape}{\end{landscape}}
 output: pdf_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -67,7 +66,7 @@ kable(rbind(groupn, ager, SESr, Edr, Hdr), row.names = FALSE, caption = "Demogra
 
 ### Code for demographics
 The code can be found in markdown version of this file, it is not printed in the PDF
-```{r demogr, warning = FALSE, echo = FALSE, results='hide'}
+```{r demogr, warning = FALSE, echo = FALSE, include = FALSE}
 # Groups
   ng1 <- sum(data.all[,2]==1)
   ng2 <- sum(data.all[,2]==2)
@@ -97,6 +96,41 @@ The code can be found in markdown version of this file, it is not printed in the
   # Difference between groups?
   fit <- lm(formula = data.all[,4] ~ as.factor(data.all[,2]))
   anova(fit)
+  
+# Intracranial Volume
+  # Cisgender women
+  mean(c(data.all[data.all[,2]==1,108], data.all[data.all[,2]==1,182]))
+  sd(c(data.all[data.all[,2]==1,108], data.all[data.all[,2]==1,182]))
+  
+  # Cisgender men
+  mean(c(data.all[data.all[,2]==2,108], data.all[data.all[,2]==2,182]))
+  sd(c(data.all[data.all[,2]==2,108], data.all[data.all[,2]==2,182]))
+  
+  # Transgender men
+  mean(c(data.all[data.all[,2]==3,108], data.all[data.all[,2]==3,182]))
+  sd(c(data.all[data.all[,2]==3,108], data.all[data.all[,2]==3,182]))
+  
+  # Transgender women
+  mean(c(data.all[data.all[,2]==4,108], data.all[data.all[,2]==4,182]))
+  sd(c(data.all[data.all[,2]==4,108], data.all[data.all[,2]==4,182]))
+  
+  # Difference between groups?
+  fit <- lm(formula = c(data.all[,108], data.all[,182]) ~ as.factor(c(data.all[,2],data.all[,2])))
+  anova(fit)
+```
+
+```{r ICV}
+  # Difference between groups for ICV
+  fit <- lm(formula = c(data.all[,108], data.all[,182]) ~ as.factor(c(data.all[,2],data.all[,2])))
+  anova(fit)
+
+  # Average (sd) of ICV for every group
+    print(paste("ICV in transgender women is ", mean(c(data.all[data.all[,2]==1,108], data.all[data.all[,2]==1,182])), " (",sd(c(data.all[data.all[,2]==1,108], data.all[data.all[,2]==1,182])),"), ",sep = ""))
+    print(paste("ICV in transgender women is ", mean(c(data.all[data.all[,2]==2,108], data.all[data.all[,2]==2,182])), " (",sd(c(data.all[data.all[,2]==2,108], data.all[data.all[,2]==2,182])),"), ",sep = ""))
+    print(paste("ICV in transgender women is ", mean(c(data.all[data.all[,2]==3,108], data.all[data.all[,2]==3,182])), " (",sd(c(data.all[data.all[,2]==3,108], data.all[data.all[,2]==3,182])),"), ",sep = ""))
+    print(paste("ICV in transgender women is ", mean(c(data.all[data.all[,2]==4,108], data.all[data.all[,2]==4,182])), " (",sd(c(data.all[data.all[,2]==4,108], data.all[data.all[,2]==4,182])),"), ",sep = ""))
+
+
 ```
 
 ```{r plot age, echo = FALSE, fig.width=6, fig.height=4}
@@ -611,4 +645,268 @@ In this section we explore what the results would have been if we would have bee
   kable(caption = "Comparison surface area", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,67:76]), 4), round(p.T1.sa.corr, 3), round(p.T2.sa.corr, 3), round(p.corr.sa, 3))))
   kable(caption = "Surface area: T1", cbind(c(" ",substring(names(data.hyp[,67:76]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T1.sa.corr,3))))
   kable(caption = "Surface area: T2", cbind(c(" ",substring(names(data.hyp[,77:86]), 4)),rbind(c("CW vs CM","CW vs TM","CW vs TW","CM vs TM","CM vs TW","TM vs TW"),round(pt.T2.sa.corr,3))))
+```
+
+
+
+## Simulations
+First we need to define the parameters of our simulations. 
+```{r Simulations parameters}
+# variance/sd epsilon
+seps <- 1  
+
+# Number of simulations
+asim <- 5000
+
+# Effect size
+delta <- 0.8
+
+# Number of participants
+n <- 30
+n.1 <- n/2      # in the first group
+n.2 <- n/2      # in the second group
+
+# Level of statistical significance 
+alpha <- 0.05
+
+# Correlation between first and second measurement
+rho <- seq(0.01,0.99,0.01)
+```
+
+Then we prepare objects to store our results
+```{r Create objects}
+# Number of simulations
+pow.mean1<-vector("numeric",length(rho))
+pow.mean2<-vector("numeric",length(rho))
+pow.mean3<-vector("numeric",length(rho))
+```
+
+```{r Load libraries, warning=FALSE, echo=FALSE}
+# Libraries
+library(lme4)
+library(lmerTest)
+```
+
+```{r Simulations code}
+# Loop over preset correlations between measure 1 and measure 2
+for(i in 1:length(rho)){
+  # Create objects to store power in for every simulations
+  pow.1<-vector("numeric",asim)
+  pow.2<-vector("numeric",asim)
+  pow.3<-vector("numeric",asim)
+  
+  for(k in 1:asim){
+    # Scenario 1: lower bound of power curve
+    # two groups with equal amount of subjects, groups differ with an effect size delta
+    # Construct a vector that determines in which group each subject falls
+    x<-c(rep(1,n.1),rep(0,n.2))
+    
+    # Vector with observations in the set of participants
+    y<-rnorm(n,0,seps)       
+    # Add an effect size to the first group
+    y[1:n.1]<-y[1:n.1]+delta    
+    
+    # Boolean of whether an effect is detected, this is later used to compute the power
+    pow.1[k]<-summary(lm(y~x))$coef[2,4]<alpha
+    
+    # Scenario 2: upper bound of power curve
+    # two groups with equal amount of subjects, twice as many as scenario 1, groups differ with an effect size delta
+    # Construct a vector that determines in which group each subject falls
+    x2<-c(rep(1,(n.1*2)),rep(0,(n.2*2)))
+    
+    # Vector with observations in the set of participants
+    y2<-rnorm(n*2,0,seps)
+    # Add an effect size to the first group
+    y2[1:(n.1*2)]<-y2[1:(n.1*2)]+delta
+    
+    # Boolean of whether an effect is detected, this is later used to compute the power
+    pow.2[k]<-summary(lm(y2~x2))$coef[2,4]<alpha
+    
+    # Scenario 3: two measurements for every subject, same amount of subjects as in scenario 1
+    # two groups with equal amount of subjects, correlation between measurements, groups differ with an effect size delta
+    # Construct a vector that determines in which group each subject falls
+    x3<-c(rep(1,n.1),rep(0,n.2),rep(1,n.1),rep(0,n.2))
+    
+    # Vector with first observation of every participant
+    y3<-rnorm(n,0,seps)
+    # Factor to multiply second set of observations with to obtain results in line with predefined correlation
+    alpac<-sqrt(rho[i]^2/(1-rho[i]^2)*seps)
+    # Construct second set of observations that are correlated with first set (y3)
+    y3.2u<-alpac*y3+rnorm(n)
+    y3.2<-y3.2u/sqrt(var(y3.2u))
+    # Add effect size to the first group of participants
+    y3[1:n.1]<-y3[1:n.1]+delta
+    y3.2[1:n.1]<-y3.2[1:n.1]+delta
+    # Combine both observations in 1 vector
+    y3o<-c(y3,y3.2)
+    
+    # Define subject numbers
+    subject<-rep(1:n,2)
+    # Construct mixed model
+    mm<-lmer(y3o ~ x3 + (1 | subject))   
+    # Boolean of whether an effect is detected, this is later used to compute the power
+    pow.3[k]<-summary(mm)$coef[2,5]<alpha
+  }
+  pow.mean1[i]<-mean(pow.1)
+  pow.mean2[i]<-mean(pow.2)
+  pow.mean3[i]<-mean(pow.3)
+}
+```
+
+
+### Results
+```{r Simulation results}
+# power of taking both measures into account
+plot(rho,pow.mean1,ylim=c(0,1), type="l")
+par(new = TRUE)
+plot(rho,pow.mean2,ylim=c(0,1), type="l")
+par(new = TRUE)
+plot(rho,pow.mean3,ylim=c(0,1), type="p", col = "goldenrod3", pch = 2)
+```
+
+```{r simulation and correlation}
+# Correlation of hypothesized regions
+  bg.one <- 3
+  nd.one <- 24
+  ln <- nd.one-bg.one+1
+  
+  # Object to save correlations
+  corrhyp <- array(data=NA, dim = ln)
+  
+  # Compute ANOVA for every predictor and save p-value
+  for(i in bg.one:nd.one){
+    corrhyp[i-bg.one+1] <- cor(x = data.hyp[,i], y = data.hyp[,i + ln])
+  }
+  
+  summary(corrhyp)
+  
+  kable(cbind(substring(names(data.hyp[,3:24]), 4), round(corrhyp,3)))
+  
+  
+# Increase in power
+```
+
+
+
+# Added later
+Here we create table 11 and table 17 with covariates
+
+## Table 11 - Volume
+```{r T1T2cov vol}
+# Volume
+  # Dataset
+    T1.vol <- data.hyp[,3:24]
+
+  # FDR
+    nr <- 22
+    p.T1.vol.cov <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T1.vol.cov[r] <- unlist(summary(aov(T1.vol[,r] ~ data.all[,4] + data.all[,108] + as.factor(data.hyp[,2]))))[19]
+    }
+    p.T1.vol.cov.corr <- p.adjust(p.T1.vol.cov, method = "fdr")
+    
+  # Bonferroni
+    # pt.T1.vol.cov <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # pt.T1.vol.cov.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # for(r in 1:nr){
+    #   # general model
+    #   if (p.T1.vol.cov.corr[r] > 0.05) {
+    #       pt.T1.vol.cov[r,] <- rep(NA,dim(allcomb)[2])
+    #   }else{
+    #     for(i in 1:dim(allcomb)[2]){
+    #       pt.T1.vol.cov[r,i] <- unlist(t.test(T1.vol[data.hyp[,2]==allcomb[1,i],r], T1.vol[data.hyp[,2]==allcomb[2,i],r])[3])
+    #     }
+    #     pt.T1.vol.cov.corr[r,] <- p.adjust(pt.T1.vol.cov[r,], method = "bonferroni")
+    #   }
+    # }
+
+    
+
+# Surface Area
+  # Dataset
+    T1.sa <- data.hyp[,67:76]
+
+  # FDR
+    nr <- 10
+    p.T1.sa.cov <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T1.sa.cov[r] <- unlist(summary(aov(T1.sa[,r] ~ data.all[,4] + data.all[,108] + as.factor(data.hyp[,2]))))[19]
+    }
+    p.T1.sa.cov.corr <- p.adjust(p.T1.sa.cov, method = "fdr")
+    
+  # Bonferroni
+    # pt.T1.sa.cov <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # pt.T1.sa.cov.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # for(r in 1:nr){
+    #   # general model
+    #   if (p.T1.sa.cov.corr[r] > 0.05) {
+    #       pt.T1.sa.cov[r,] <- rep(NA,dim(allcomb)[2])
+    #   }else{
+    #     for(i in 1:dim(allcomb)[2]){
+    #       pt.T1.sa.cov[r,i] <- unlist(t.test(T1.sa[data.hyp[,2]==allcomb[1,i],r], T1.sa[data.hyp[,2]==allcomb[2,i],r])[3])
+    #     }
+    #     pt.T1.sa.cov.corr[r,] <- p.adjust(pt.T1.sa[r,], method = "bonferroni")
+    #   }
+    # }
+
+# Volume
+  # Dataset
+    T2.vol <- data.hyp[,25:46]
+
+  # FDR
+    nr <- 22
+    p.T2.vol.cov <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T2.vol.cov[r] <- unlist(summary(aov(T2.vol[,r] ~ data.all[,4] + data.all[,108] + as.factor(data.hyp[,2]))))[19]
+    }
+    p.T2.vol.cov.corr <- p.adjust(p.T2.vol.cov, method = "fdr")
+    
+  # Bonferroni
+    # pt.T2.vol.cov <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # pt.T2.vol.cov.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # for(r in 1:nr){
+    #   # general model
+    #   if (p.T2.vol.cov.corr[r] > 0.05) {
+    #       pt.T2.vol.cov[r,] <- rep(NA,dim(allcomb)[2])
+    #   }else{
+    #     for(i in 1:dim(allcomb)[2]){
+    #       pt.T2.vol.cov[r,i] <- unlist(t.test(T2.vol[data.hyp[,2]==allcomb[1,i],r], T2.vol[data.hyp[,2]==allcomb[2,i],r])[3])
+    #     }
+    #     pt.T2.vol.cov.corr[r,] <- p.adjust(pt.T2.vol.cov[r,], method = "bonferroni")
+    #   }
+    # }
+
+    
+# Surface Area
+  # Dataset
+    T2.sa <- data.hyp[,77:86]
+
+  # FDR
+    nr <- 10
+    p.T2.sa.cov <- array(data=NA, dim = nr)
+    for(r in 1:nr){
+      p.T2.sa.cov[r] <- unlist(summary(aov(T2.sa[,r] ~ data.all[,4] + data.all[,108] + as.factor(data.hyp[,2]))))[19]
+    }
+    p.T2.sa.cov.corr <- p.adjust(p.T2.sa.cov, method = "fdr")
+    
+  # Bonferroni
+    # pt.T2.sa.cov <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # pt.T2.sa.cov.corr <- array(data = NA, dim = c(nr,dim(allcomb)[2]))
+    # for(r in 1:nr){
+    #   # general model
+    #   if (p.T2.sa.cov.corr[r] > 0.05) {
+    #       pt.T2.sa.cov[r,] <- rep(NA,dim(allcomb)[2])
+    #   }else{
+    #     for(i in 1:dim(allcomb)[2]){
+    #       pt.T2.sa.cov[r,i] <- unlist(t.test(T2.sa[data.hyp[,2]==allcomb[1,i],r], T2.sa[data.hyp[,2]==allcomb[2,i],r])[3])
+    #     }
+    #     pt.T2.sa.cov.corr[r,] <- p.adjust(pt.T2.sa.cov[r,], method = "bonferroni")
+    #   }
+    # }
+```
+```{r table cov}
+# Volume
+  kable(caption = "Comparison volume", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,3:24]), 4), round(p.T1.vol.cov.corr, 3), round(p.T2.vol.cov.corr, 3), round(p.cov.corr, 3))))
+# Surface area
+  kable(caption = "Comparison surface area", rbind(c("Region", "T1", "T2", "Rep Meas"), cbind(substring(names(data.hyp[,67:76]), 4), round(p.T1.sa.cov.corr, 3), round(p.T2.sa.cov.corr, 3), round(p.cov.corr.sa, 3))))
 ```
